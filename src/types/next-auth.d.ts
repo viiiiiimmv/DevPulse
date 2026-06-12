@@ -6,7 +6,9 @@ declare module "next-auth" {
       githubId?: string | null;
       username?: string | null;
       avatarUrl?: string | null;
+      id?: string | null;
     };
+    accessToken?: string;
   }
 }
 
@@ -15,5 +17,6 @@ declare module "next-auth/jwt" {
     githubId?: string | null;
     username?: string | null;
     avatarUrl?: string | null;
+    accessToken?: string;
   }
 }

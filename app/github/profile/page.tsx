@@ -1,16 +1,9 @@
-import { auth, signOut } from "@/src/auth";
+import { auth } from "@/src/auth";
 import { getUserByEmail } from "@/src/server/user/user.service";
 import { redirect } from "next/navigation";
-import { DashboardContent } from "./dashboard-content";
+import { GitHubProfileClient } from "./github-profile-client";
 
-async function handleLogout() {
-  "use server";
-  await signOut({
-    redirectTo: "/login",
-  });
-}
-
-export default async function DashboardPage() {
+export default async function GitHubProfilePage() {
   const session = await auth();
 
   if (!session?.user?.email) {
@@ -24,6 +17,6 @@ export default async function DashboardPage() {
   }
 
   return (
-    <DashboardContent user={user} onLogout={handleLogout} />
+    <GitHubProfileClient user={user} />
   );
 }

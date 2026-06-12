@@ -14,8 +14,10 @@ model User{
   username String
   email String? @unique
   avatarUrl String?
+  bio String?
 
   repositories Repository[]
+  activities Activity[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -29,20 +31,24 @@ model Repository {
   stars Int @default(0)
   forks Int @default(0)
   ownerId String
-  owner User @relation(fields:[ownerId],references:[id])
+  owner User @relation(fields:[ownerId],references:[id], onDelete: Cascade)
   commits Commit[]
   stats Stats?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  isPrivate Boolean
+  githubUpdatedAt DateTime
 }
 
 model Commit {
   id String @id @default(cuid())
   sha String @unique
   message String
+  author String
+  authorAvatarUrl String?
   committedAt DateTime
   repositoryId String
-  repository Repository @relation(fields:[repositoryId],references:[id])
+  repository Repository @relation(fields:[repositoryId],references:[id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
 
@@ -52,6 +58,18 @@ model Stats{
   totalStars Int @default(0)
   totalForks Int @default(0)
   repositoryId String @unique
-  repository Repository @relation(fields:[repositoryId], references:[id])
+  repository Repository @relation(fields:[repositoryId], references:[id], onDelete: Cascade)
   updatedAt DateTime @updatedAt
+}
+
+model Activity {
+  id String @id @default(cuid())
+  userId String
+  type String
+  metadata Json?
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
