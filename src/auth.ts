@@ -9,6 +9,7 @@ import { getToken } from "next-auth/jwt";
 import Github, { type GithubProfile } from "next-auth/providers/github";
 
 import { prisma } from "@/src/server/prisma/client";
+import { logActivity } from "@/src/services/activity.service";
 
 type AuthRedirectOptions = {
   callbackUrl?: string;
@@ -34,6 +35,7 @@ export const authOptions: NextAuthOptions = {
     Github({
       clientId: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
 
@@ -52,7 +54,7 @@ export const authOptions: NextAuthOptions = {
       const email = user.email ?? profile.email ?? null;
       const avatarUrl = user.image ?? profile.avatar_url ?? null;
 
-      await prisma.user.upsert({
+      const dbUser = await prisma.user.upsert({
         where: { githubId },
         update: {
           username: profile.login,
@@ -69,40 +71,40 @@ export const authOptions: NextAuthOptions = {
         },
       });
 
+      await logActivity(dbUser.id, "USER_SIGNED_IN");
+
       return true;
     },
 
-    async jwt({ token, profile }) {
+    async jwt({ token, profile, account }) {
       if (isGitHubProfile(profile)) {
         token.githubId = String(profile.id);
         token.username = profile.login;
         token.avatarUrl = profile.avatar_url ?? null;
-
-        return token;
       }
 
-      if (!token.username) {
+      if (account?.access_token) {
+        token.accessToken = account.access_token;
+      }
+
+      if (account || token.sub === token.githubId || !token.username) {
         const user =
           (token.githubId &&
             (await prisma.user.findUnique({
               where: { githubId: token.githubId },
-              select: { githubId: true, username: true, avatarUrl: true },
-            }))) ||
-          (token.sub &&
-            (await prisma.user.findUnique({
-              where: { githubId: token.sub },
-              select: { githubId: true, username: true, avatarUrl: true },
+              select: { githubId: true, username: true, avatarUrl: true, id: true },
             }))) ||
           (token.email &&
             (await prisma.user.findUnique({
               where: { email: token.email },
-              select: { githubId: true, username: true, avatarUrl: true },
+              select: { githubId: true, username: true, avatarUrl: true, id: true },
             })));
 
         if (user) {
           token.githubId = user.githubId;
           token.username = user.username;
           token.avatarUrl = user.avatarUrl;
+          token.sub = user.id;
         }
       }
 
@@ -114,6 +116,8 @@ export const authOptions: NextAuthOptions = {
         session.user.githubId = token.githubId ?? null;
         session.user.username = token.username ?? null;
         session.user.avatarUrl = token.avatarUrl ?? session.user.image ?? null;
+        session.user.id = token.sub ?? null;
+        session.accessToken = token.accessToken ?? undefined;
       }
 
       return session;
@@ -166,6 +170,20 @@ export async function signIn(provider: string, options?: AuthRedirectOptions) {
 }
 
 export async function signOut(options?: AuthRedirectOptions) {
+  const session = await auth();
+  const githubId = session?.user?.githubId;
+
+  if (githubId) {
+    const dbUser = await prisma.user.findUnique({
+      where: { githubId },
+      select: { id: true },
+    });
+
+    if (dbUser) {
+      await logActivity(dbUser.id, "USER_SIGNED_OUT");
+    }
+  }
+
   const redirectTo = options?.redirectTo ?? "/login";
   redirect(`/api/auth/signout?redirectTo=${encodeURIComponent(redirectTo)}`);
 }

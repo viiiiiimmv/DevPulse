@@ -28,7 +28,7 @@ export async function getUserByGithubId(githubId: string) {
 export async function updateGithubData(
   userId: string,
   data : {
-  usrname?: string;
+  username?: string;
   avatarUrl? : string;
   }
 ) {
