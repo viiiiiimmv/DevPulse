@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/src/auth";
 import { prisma } from "@/src/server/prisma/client";
-import { getUserByEmail } from "@/src/server/user/user.service";
+import { getUserByEmail } from "@/src/services/user.service";
 
 export async function GET() {
   try {
@@ -19,6 +19,7 @@ export async function GET() {
       where: { ownerId: user.id },
       orderBy: { githubUpdatedAt: "desc" },
       take: 5,
+      include: { languages: true },
     });
 
     return NextResponse.json({ success: true, repositories });

@@ -2,8 +2,8 @@
 
 import { auth } from "@/src/auth";
 import { prisma } from "@/src/server/prisma/client";
-import { getUserProfile } from "@/src/lib/github/github.service";
-import { logActivity } from "@/src/lib/activitylogger";
+import { getUserProfile } from "@/src/services/github.service";
+import { logActivity } from "@/src/services/activity.service";
 import { NextResponse } from "next/server";
 
 export async function POST() {

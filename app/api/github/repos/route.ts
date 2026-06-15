@@ -1,9 +1,10 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/src/auth";
 import { prisma } from "@/src/server/prisma/client";
 
-import { getRepositories, getRecentCommits } from "@/src/lib/github/github.service";
+import { getRepositories, getRecentCommits, getRepositoryLanguages } from "@/src/services/github.service";
 
 export async function GET() {
   try {
@@ -25,6 +26,7 @@ export async function GET() {
       },
       include: {
         stats: true,
+        languages: true,
       },
     });
 
@@ -81,7 +83,7 @@ export async function POST() {
         shouldFetchCommits = true;
       } else if (existingRepo) {
         const commitCount = await prisma.commit.count({ where: { repositoryId: existingRepo.id } });
-        if (commitCount === 0) {
+        if (commitCount < 100) {
           shouldFetchCommits = true;
         }
       }
@@ -121,10 +123,16 @@ export async function POST() {
         try {
           const owner = repo.owner?.login || session.user.username;
           if (owner) {
-            const commits = await getRecentCommits(accessToken, owner, repo.name, 5);
+            const commits = await getRecentCommits(accessToken, owner, repo.name, 100);
+            console.log(`Fetched ${commits.length} commits for ${repo.name} from Github API.`);
             for (const commit of commits) {
               await prisma.commit.upsert({
-                where: { sha: commit.sha },
+                where: {
+                  repositoryId_sha: {
+                    repositoryId: dbRepo.id,
+                    sha: commit.sha,
+                  },
+                },
                 update: {
                   message: commit.commit.message,
                   author: commit.commit.author?.name || commit.author?.login || "Unknown",
@@ -141,10 +149,55 @@ export async function POST() {
                 },
               });
             }
+
+            const languages = await getRepositoryLanguages(accessToken, owner, repo.name);
+            console.log(`Fetched languages for ${repo.name}`);
+            for (const [languageName, bytes] of Object.entries(languages)) {
+              await prisma.repositoryLanguage.upsert({
+                where: {
+                  repositoryId_name: {
+                    repositoryId: dbRepo.id,
+                    name: languageName,
+                  },
+                },
+                update: {
+                  bytes: Number(bytes),
+                },
+                create: {
+                  repositoryId: dbRepo.id,
+                  name: languageName,
+                  bytes: Number(bytes),
+                },
+              });
+            }
           }
         } catch (commitErr) {
           console.error(`Failed to fetch commits for ${repo.name}:`, commitErr);
         }
+      }
+
+      // Calculate and cache stats for the repository
+      try {
+        const totalCommits = await prisma.commit.count({
+          where: { repositoryId: dbRepo.id },
+        });
+
+        await prisma.stats.upsert({
+          where: { repositoryId: dbRepo.id },
+          update: {
+            totalCommits,
+            totalStars: dbRepo.stars,
+            totalForks: dbRepo.forks,
+          },
+          create: {
+            repositoryId: dbRepo.id,
+            totalCommits,
+            totalStars: dbRepo.stars,
+            totalForks: dbRepo.forks,
+          },
+        });
+      } catch (statsErr) {
+        console.error(`Failed to update stats for ${repo.name}:`, statsErr);
       }
     }
 

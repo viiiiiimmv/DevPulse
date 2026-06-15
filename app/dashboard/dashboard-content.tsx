@@ -1,7 +1,20 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { 
+  FolderGit, 
+  GitCommit, 
+  Star, 
+  GitFork, 
+  RefreshCw, 
+  LogOut, 
+  ExternalLink,
+  Activity as ActivityIcon,
+  Calendar
+} from "lucide-react";
 
 export interface DashboardUser {
   name: string | null;
@@ -16,70 +29,54 @@ export interface DashboardStats {
   totalCommits: number;
   totalStars: number;
   totalForks: number;
-  activityCount: number;
-  weeklyCommitCount: number;
 }
 
 export interface Activity {
   id: string;
   type: string;
-  createdAt: string;
+  createdAt: Date;
 }
 
-export interface Repository {
-  id: string;
+export interface CommitRepo {
   name: string;
-  stars: number;
-  forks: number;
-  githubUpdatedAt: string;
 }
 
-export function DashboardContent({ user, onLogout }: { user: DashboardUser; onLogout: () => Promise<void> }) {
+export interface DashboardCommit {
+  id: string;
+  sha: string;
+  message: string;
+  author: string;
+  authorAvatarUrl: string | null;
+  committedAt: Date;
+  repositoryId: string;
+  repository: CommitRepo;
+}
+
+export function DashboardContent({ 
+  user, 
+  stats,
+  activities,
+  commits,
+  onLogout 
+}: { 
+  user: DashboardUser; 
+  stats: DashboardStats;
+  activities: Activity[];
+  commits: DashboardCommit[];
+  onLogout: () => Promise<void> 
+}) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [repos, setRepos] = useState<Repository[]>([]);
-  const [dataLoading, setDataLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadDashboardData() {
-      setDataLoading(true);
-      try {
-        const [statsRes, activityRes, reposRes] = await Promise.all([
-          fetch("/api/dashboard/stats"),
-          fetch("/api/dashboard/activity"),
-          fetch("/api/dashboard/repos")
-        ]);
-
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setStats(statsData.stats);
-        }
-        if (activityRes.ok) {
-          const activityData = await activityRes.json();
-          setActivities(activityData.activities);
-        }
-        if (reposRes.ok) {
-          const reposData = await reposRes.json();
-          setRepos(reposData.repositories);
-        }
-      } catch (error) {
-        console.error("Failed to load dashboard data", error);
-      } finally {
-        setDataLoading(false);
-      }
-    }
-    loadDashboardData();
-  }, []);
+  const [commitPage, setCommitPage] = useState(1);
+  const commitsPerPage = 8;
+  const router = useRouter();
 
   const handleSync = async () => {
     setLoading(true);
     setMessage(null);
 
     try {
-      const response = await fetch("/api/github/profile", {
+      const response = await fetch("/api/github/repos", {
         method: "POST",
       });
 
@@ -90,9 +87,13 @@ export function DashboardContent({ user, onLogout }: { user: DashboardUser; onLo
       }
 
       setMessage({
-        text: `Successfully synced! Updated with ${data.profile.publicRepos} public repositories.`,
+        text: `Successfully synced!`,
         type: "success",
       });
+      
+      // Refresh the page to load new data from server
+      router.refresh();
+      
     } catch (error) {
       setMessage({
         text: error instanceof Error ? error.message : "Failed to sync GitHub data",
@@ -103,148 +104,226 @@ export function DashboardContent({ user, onLogout }: { user: DashboardUser; onLo
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: Date) => {
     return new Intl.DateTimeFormat("en-US", {
       month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
     }).format(new Date(dateString));
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-10">
-      <div className="border rounded-lg p-6 shadow-sm bg-white dark:bg-slate-800 dark:border-slate-700">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      {/* Header section */}
+      <div className="bg-card/60 backdrop-blur-lg border border-border/40 rounded-2xl p-6 shadow-sm flex flex-wrap items-center gap-6 justify-between transition-colors duration-300">
         <div className="flex items-center gap-4">
-          <img
-            src={user.avatarUrl || ""}
-            alt="Profile Picture"
-            className="w-20 h-20 rounded-full border shadow-sm"
-          />
-
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-full blur opacity-25 group-hover:opacity-40 transition-opacity" />
+            <img
+              src={user.avatarUrl || "https://via.placeholder.com/64"}
+              alt="Profile Picture"
+              className="relative w-16 h-16 rounded-full border border-border/50 shadow-sm"
+            />
+          </div>
           <div>
-            <h1 className="text-2xl font-bold dark:text-white">
-              Welcome {user.name}
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
+              Welcome, {user.name || user.username}
             </h1>
-            <p className="text-gray-500 dark:text-slate-400">
+            <p className="text-sm font-semibold text-muted-foreground">
               @{user.username}
             </p>
           </div>
-          
-          <div className="ml-auto flex gap-4">
-            <a
-              href="/github/profile"
-              className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-            >
-              GitHub Profile
-            </a>
-            <form action={onLogout}>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded border hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors dark:text-white"
-              >
-                Logout
-              </button>
-            </form>
-          </div>
         </div>
-
-        {message && (
-          <div
-            className={`mt-4 p-3 rounded ${
-              message.type === "success"
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
+        
+        <div className="flex gap-3 items-center">
+          <button
+            onClick={handleSync}
+            disabled={loading}
+            className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:shadow-lg hover:shadow-primary/15 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 cursor-pointer text-sm"
           >
-            {message.text}
-          </div>
-        )}
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Sync GitHub Data</span>
+          </button>
+          
+          <form action={onLogout}>
+            <button
+              type="submit"
+              className="px-4 py-2.5 rounded-xl border border-border/50 bg-card hover:bg-secondary/80 text-muted-foreground hover:text-foreground font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2 cursor-pointer text-sm"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          </form>
+        </div>
+      </div>
 
-        {dataLoading ? (
-          <div className="mt-8 flex justify-center py-10">
-            <svg className="animate-spin h-10 w-10 text-blue-600" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-          </div>
-        ) : (
-          <>
-            {/* Stats Grid */}
-            {stats && (
-              <div className="mt-8 grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 border border-blue-200 rounded p-4 dark:bg-blue-900/30 dark:border-blue-800">
-                  <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-300">Repositories</h3>
-                  <p className="text-3xl font-bold text-blue-900 mt-1 dark:text-blue-100">{stats.totalRepositories}</p>
-                </div>
-                <div className="bg-green-50 border border-green-200 rounded p-4 dark:bg-green-900/30 dark:border-green-800">
-                  <h3 className="text-sm font-semibold text-green-800 dark:text-green-300">Total Commits</h3>
-                  <p className="text-3xl font-bold text-green-900 mt-1 dark:text-green-100">{stats.totalCommits}</p>
-                </div>
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-4 dark:bg-yellow-900/30 dark:border-yellow-800">
-                  <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-300">Total Stars</h3>
-                  <p className="text-3xl font-bold text-yellow-900 mt-1 dark:text-yellow-100">{stats.totalStars}</p>
-                </div>
-                <div className="bg-purple-50 border border-purple-200 rounded p-4 dark:bg-purple-900/30 dark:border-purple-800">
-                  <h3 className="text-sm font-semibold text-purple-800 dark:text-purple-300">Total Forks</h3>
-                  <p className="text-3xl font-bold text-purple-900 mt-1 dark:text-purple-100">{stats.totalForks}</p>
-                </div>
-                <div className="bg-pink-50 border border-pink-200 rounded p-4 dark:bg-pink-900/30 dark:border-pink-800">
-                  <h3 className="text-sm font-semibold text-pink-800 dark:text-pink-300">Weekly Commits</h3>
-                  <p className="text-3xl font-bold text-pink-900 mt-1 dark:text-pink-100">{stats.weeklyCommitCount}</p>
-                </div>
-                <div className="bg-indigo-50 border border-indigo-200 rounded p-4 dark:bg-indigo-900/30 dark:border-indigo-800">
-                  <h3 className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">Activity Count</h3>
-                  <p className="text-3xl font-bold text-indigo-900 mt-1 dark:text-indigo-100">{stats.activityCount}</p>
-                </div>
+      {message && (
+        <div
+          className={`p-4 rounded-xl border font-medium text-sm transition-all ${
+            message.type === "success"
+              ? "bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400"
+              : "bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-400"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Repositories", value: stats.totalRepositories, icon: FolderGit, color: "text-indigo-500", href: "/repos" },
+          { label: "Total Commits", value: stats.totalCommits, icon: GitCommit, color: "text-violet-500", href: "/analytics" },
+          { label: "Stars Earned", value: stats.totalStars, icon: Star, color: "text-amber-500" },
+          { label: "Forks Sync", value: stats.totalForks, icon: GitFork, color: "text-pink-500" }
+        ].map((item, index) => {
+          const Icon = item.icon;
+          const cardBody = (
+            <div className="bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all hover:-translate-y-0.5 group duration-300 h-full flex flex-col justify-between">
+              <div className="flex justify-between items-start">
+                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{item.label}</h3>
+                <Icon className={`w-4 h-4 ${item.color} group-hover:scale-110 transition-transform`} />
               </div>
+              <p className="text-3xl font-extrabold mt-3 text-foreground tracking-tight">{item.value}</p>
+            </div>
+          );
+
+          if (item.href) {
+            return (
+              <Link key={index} href={item.href} className="block cursor-pointer">
+                {cardBody}
+              </Link>
+            );
+          }
+
+          return <div key={index}>{cardBody}</div>;
+        })}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Recent Commits (takes up 2/3 of space on large screens) */}
+        <div className="lg:col-span-2 border border-border/40 rounded-2xl bg-card/60 backdrop-blur-md shadow-sm overflow-hidden transition-colors duration-300">
+          <div className="p-5 border-b border-border/40 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+              <GitCommit className="w-5 h-5 text-indigo-500" />
+              <span>Recent GitHub Commits</span>
+            </h2>
+            <span className="text-xs bg-secondary/80 font-bold px-2.5 py-1 rounded-full text-muted-foreground animate-pulse">
+              Latest Edits
+            </span>
+          </div>
+          
+          <div className="divide-y divide-border/25">
+            {commits.length === 0 ? (
+              <p className="p-10 text-center text-muted-foreground font-semibold text-sm">
+                No recent commits found. Click &quot;Sync GitHub Data&quot; to fetch your latest edits!
+              </p>
+            ) : (
+              commits.slice((commitPage - 1) * commitsPerPage, commitPage * commitsPerPage).map((commit) => (
+                <div key={commit.id} className="p-5 hover:bg-secondary/25 transition-colors duration-150 flex items-start gap-4 group">
+                  {/* Author Avatar */}
+                  {commit.authorAvatarUrl ? (
+                    <img 
+                      src={commit.authorAvatarUrl} 
+                      alt={commit.author} 
+                      className="w-10 h-10 rounded-full border border-border/40 bg-secondary object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full border border-border/40 bg-secondary flex items-center justify-center text-muted-foreground font-bold text-sm">
+                      {commit.author.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+
+                  {/* Commit Text */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors duration-150">
+                      {commit.message.split('\n')[0]}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs font-semibold text-muted-foreground">
+                      <span className="text-foreground/90">{commit.author}</span>
+                      <span className="text-muted-foreground/40">&bull;</span>
+                      <Link 
+                        href={`/repositories/${commit.repositoryId}`}
+                        className="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-0.5"
+                      >
+                        <span>{commit.repository.name}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                      <span className="text-muted-foreground/40">&bull;</span>
+                      <span className="flex items-center gap-1 font-medium">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{formatDate(commit.committedAt)}</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Commit SHA */}
+                  <div className="hidden sm:block flex-shrink-0">
+                    <span className="inline-flex items-center rounded-lg bg-secondary border border-border/30 px-2.5 py-1 text-xs font-bold text-muted-foreground font-mono leading-none">
+                      {commit.sha.substring(0, 7)}
+                    </span>
+                  </div>
+                </div>
+              ))
             )}
+          </div>
 
-            <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Recent Activity Feed */}
-              <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-5">
-                <h2 className="text-xl font-bold mb-4 dark:text-white">Recent Activity Feed</h2>
-                {activities.length === 0 ? (
-                  <p className="text-gray-500">No recent activity.</p>
-                ) : (
-                  <ul className="space-y-4">
-                    {activities.map(activity => (
-                      <li key={activity.id} className="flex gap-3 text-sm">
-                        <div className="mt-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-full">
-                          <svg className="w-4 h-4 text-slate-500 dark:text-slate-300" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd"></path></svg>
-                        </div>
-                        <div>
-                          <p className="font-medium dark:text-slate-200">{activity.type.replace(/_/g, " ")}</p>
-                          <p className="text-xs text-gray-500 dark:text-slate-400">{formatDate(activity.createdAt)}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {/* Recent Repositories */}
-              <div className="border border-slate-200 dark:border-slate-700 rounded-lg p-5">
-                <h2 className="text-xl font-bold mb-4 dark:text-white">Recently Updated Repos</h2>
-                {repos.length === 0 ? (
-                  <p className="text-gray-500">No repositories synced yet.</p>
-                ) : (
-                  <ul className="space-y-4">
-                    {repos.map(repo => (
-                      <li key={repo.id} className="border-b border-slate-100 dark:border-slate-800 pb-3 last:border-0 last:pb-0">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-semibold text-blue-600 dark:text-blue-400 text-base">{repo.name}</h3>
-                          <span className="text-xs text-slate-500">{formatDate(repo.githubUpdatedAt)}</span>
-                        </div>
-                        <div className="flex gap-3 mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          <span className="flex items-center gap-1">⭐ {repo.stars}</span>
-                          <span className="flex items-center gap-1">🔄 {repo.forks}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+          {/* Commits Pagination Footer */}
+          {commits.length > commitsPerPage && (
+            <div className="p-4 border-t border-border/40 flex items-center justify-between bg-secondary/15 font-semibold text-xs transition-colors duration-300">
+              <p className="text-muted-foreground">
+                Showing <span className="text-foreground">{((commitPage - 1) * commitsPerPage) + 1}</span> to <span className="text-foreground">{Math.min(commitPage * commitsPerPage, commits.length)}</span> of <span className="text-foreground">{commits.length}</span> commits
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCommitPage(p => Math.max(1, p - 1))}
+                  disabled={commitPage === 1}
+                  className="px-3.5 py-1.5 border border-border/50 bg-card rounded-xl text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 hover:bg-secondary/70 transition-all cursor-pointer flex items-center select-none"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setCommitPage(p => Math.min(Math.ceil(commits.length / commitsPerPage), p + 1))}
+                  disabled={commitPage >= Math.ceil(commits.length / commitsPerPage)}
+                  className="px-3.5 py-1.5 border border-border/50 bg-card rounded-xl text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 hover:bg-secondary/70 transition-all cursor-pointer flex items-center select-none"
+                >
+                  Next
+                </button>
               </div>
             </div>
-          </>
-        )}
+          )}
+        </div>
+
+        {/* Recent Activity Feed (takes up 1/3 of space on large screens) */}
+        <div className="border border-border/40 rounded-2xl bg-card/60 backdrop-blur-md shadow-sm overflow-hidden transition-colors duration-300">
+          <div className="p-5 border-b border-border/40">
+            <h2 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+              <ActivityIcon className="w-5 h-5 text-violet-500" />
+              <span>Activity Log</span>
+            </h2>
+          </div>
+          <div className="p-5">
+            {activities.length === 0 ? (
+              <p className="text-muted-foreground text-sm font-semibold py-4">No recent activity synced.</p>
+            ) : (
+              <div className="relative pl-4 border-l border-border/50 space-y-6 py-2">
+                {activities.map(activity => (
+                  <div key={activity.id} className="relative group">
+                    {/* Activity Bullet Point */}
+                    <div className="absolute -left-[22.5px] top-1 w-3 h-3 rounded-full bg-primary border-2 border-background scale-100 group-hover:scale-125 transition-transform" />
+                    <div>
+                      <p className="font-semibold text-sm text-foreground capitalize tracking-wide">
+                        {activity.type.replace(/_/g, " ").toLowerCase()}
+                      </p>
+                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-semibold mt-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{formatDate(activity.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

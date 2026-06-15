@@ -3,6 +3,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { 
+  RefreshCw, 
+  Calendar, 
+  Mail, 
+  Code,
+  CheckCircle2,
+  Lightbulb,
+  ShieldCheck
+} from "lucide-react";
 
 interface GitHubProfileResponse {
   success: boolean;
@@ -49,10 +58,8 @@ export function GitHubProfileClient({ user }: { user: User }) {
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [syncData, setSyncData] = useState<GitHubProfileResponse["profile"] | null>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
-  const [loadingRepos, setLoadingRepos] = useState(false);
 
   const fetchRepositories = async () => {
-    setLoadingRepos(true);
     try {
       const response = await fetch("/api/github/repos", {
         method: "GET",
@@ -69,17 +76,15 @@ export function GitHubProfileClient({ user }: { user: User }) {
       setRepositories(reposData.repositories);
     } catch (error) {
       console.error("Failed to fetch repositories:", error);
-    } finally {
-      setLoadingRepos(false);
     }
   };
 
-  // Load data on mount
   useEffect(() => {
-    fetchRepositories();
+    const timer = setTimeout(() => {
+      fetchRepositories();
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
-
-
 
   const handleSync = async () => {
     setSyncing(true);
@@ -150,78 +155,90 @@ export function GitHubProfileClient({ user }: { user: User }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 transition-colors duration-300">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+        <div className="border-b border-border/45 pb-6">
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">
             GitHub Profile
           </h1>
-          <p className="text-slate-600 dark:text-slate-300">
-            Manage and sync your GitHub profile data and repositories
+          <p className="text-sm font-semibold text-muted-foreground">
+            Manage, review, and synchronize your public GitHub data feed.
           </p>
         </div>
 
         {/* Message Alert */}
         {message && (
           <div
-            className={`mb-6 p-4 rounded-lg font-medium transition-all ${
+            className={`p-4 rounded-xl font-medium text-sm border transition-all ${
               message.type === "success"
-                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 border border-green-300 dark:border-green-700"
-                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100 border border-red-300 dark:border-red-700"
+                ? "bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400"
+                : "bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-400"
             }`}
           >
             {message.text}
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-4">
+        <div className="grid gap-8 lg:grid-cols-4 items-start">
+          
           {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-8">
+            
             {/* Profile Information */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                Profile Information
+            <div className="bg-card/60 backdrop-blur-md rounded-2xl p-6 border border-border/40 shadow-sm transition-colors duration-300">
+              <h2 className="text-lg font-bold text-foreground tracking-tight mb-6">
+                Profile Details
               </h2>
 
-              <div className="flex gap-6 mb-6">
-                <img
-                  src={displayData.avatarUrl || "https://via.placeholder.com/120"}
-                  alt={displayData.username}
-                  className="w-24 h-24 rounded-full border-4 border-slate-200 dark:border-slate-700 shadow-md"
-                />
+              <div className="flex flex-col sm:flex-row gap-6 mb-6">
+                <div className="relative group self-center sm:self-start">
+                  <div className="absolute -inset-0.5 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-full blur opacity-20 group-hover:opacity-35 transition-opacity" />
+                  <img
+                    src={displayData.avatarUrl || "https://via.placeholder.com/120"}
+                    alt={displayData.username}
+                    className="relative w-24 h-24 rounded-full border-2 border-border/40 shadow-md object-cover"
+                  />
+                </div>
 
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-                    {user.name}
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="text-2xl font-extrabold text-foreground tracking-tight">
+                    {user.name || displayData.username}
                   </h3>
-                  <p className="text-lg text-slate-600 dark:text-slate-300 mb-3">
+                  <p className="text-sm font-semibold text-muted-foreground mb-3">
                     @{displayData.username}
                   </p>
                   {displayData.bio && (
-                    <p className="text-slate-600 dark:text-slate-300 max-w-md">
+                    <p className="text-sm text-muted-foreground max-w-xl font-medium leading-relaxed">
                       {displayData.bio}
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="border-t border-slate-200 dark:border-slate-700 pt-6 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600 dark:text-slate-300">Email:</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    {user.email || "Not provided"}
+              <div className="border-t border-border/30 pt-6 space-y-3">
+                <div className="flex justify-between items-center text-sm font-medium">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Mail className="w-4 h-4 text-muted-foreground/60" /> Email
+                  </span>
+                  <span className="text-foreground">
+                    {user.email || "Not public"}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600 dark:text-slate-300">GitHub ID:</span>
-                  <span className="font-mono font-medium text-slate-900 dark:text-white">
+                <div className="flex justify-between items-center text-sm font-medium">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Code className="w-4 h-4 text-muted-foreground/60" /> GitHub ID
+                  </span>
+                  <span className="font-mono text-foreground">
                     {user.githubId}
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600 dark:text-slate-300">Member Since:</span>
-                  <span className="font-medium text-slate-900 dark:text-white">
+                <div className="flex justify-between items-center text-sm font-medium">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-muted-foreground/60" /> Member Since
+                  </span>
+                  <span className="text-foreground">
                     {formatDate(user.createdAt)}
                   </span>
                 </div>
@@ -229,178 +246,63 @@ export function GitHubProfileClient({ user }: { user: User }) {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-lg p-4 border border-blue-200 dark:border-blue-700">
-                <div className="text-sm text-blue-600 dark:text-blue-300 font-medium">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-card/50 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
+                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   Public Repositories
                 </div>
-                <div className="text-3xl font-bold text-blue-900 dark:text-blue-100 mt-2">
+                <div className="text-3xl font-extrabold text-foreground mt-2 tracking-tight">
                   {repositories.length}
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900 dark:to-purple-800 rounded-lg p-4 border border-purple-200 dark:border-purple-700">
-                <div className="text-sm text-purple-600 dark:text-purple-300 font-medium">
+              <div className="bg-card/50 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
+                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   Last Synced
                 </div>
-                <div className="text-sm font-mono text-purple-900 dark:text-purple-100 mt-2" suppressHydrationWarning>
+                <div className="text-sm font-mono text-foreground mt-3 leading-relaxed" suppressHydrationWarning>
                   {formatDate(user.updatedAt)}
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900 dark:to-green-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
-                <div className="text-sm text-green-600 dark:text-green-300 font-medium">
-                  Total Stars
+              <div className="bg-card/50 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
+                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                  Total Stars Received
                 </div>
-                <div className="text-3xl font-bold text-green-900 dark:text-green-100 mt-2">
+                <div className="text-3xl font-extrabold text-foreground mt-2 tracking-tight">
                   {repositories.reduce((sum, repo) => sum + repo.stars, 0)}
                 </div>
               </div>
             </div>
 
-            {/* Repositories Section */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                Your Repositories
-              </h2>
-
-              {loadingRepos ? (
-                <div className="flex justify-center items-center py-8">
-                  <svg className="animate-spin h-8 w-8 text-blue-600" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                </div>
-              ) : repositories.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-slate-600 dark:text-slate-300 mb-4">
-                    No repositories found. Click &quot;Sync Now&quot; to fetch your repositories.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {repositories.map((repo) => (
-                    <div
-                      key={repo.id}
-                      className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">
-                          {repo.name}
-                        </h3>
-                        {repo.isPrivate && (
-                          <span className="text-xs font-bold px-2 py-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-100 rounded">
-                            Private
-                          </span>
-                        )}
-                      </div>
-
-                      {repo.description && (
-                        <p className="text-slate-600 dark:text-slate-300 text-sm mb-3">
-                          {repo.description}
-                        </p>
-                      )}
-
-                      <div className="flex flex-wrap gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                        <div className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
-                          <svg
-                            className="w-4 h-4 text-yellow-500"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          {repo.stars}
-                        </div>
-
-                        <div className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
-                          <svg
-                            className="w-4 h-4"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          {repo.forks}
-                        </div>
-
-                        <div className="ml-auto text-xs text-slate-500 dark:text-slate-400">
-                          Updated {formatDate(repo.githubUpdatedAt)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {/* Sync Details */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-                Sync Details
+            <div className="bg-card/60 backdrop-blur-md rounded-2xl p-6 border border-border/40 shadow-sm transition-colors duration-300">
+              <h3 className="text-base font-bold text-foreground mb-4 tracking-tight">
+                Authentication & Integration Profile
               </h3>
 
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded">
-                  <div className="flex-shrink-0 mt-1">
-                    <svg
-                      className="w-5 h-5 text-green-600 dark:text-green-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex items-start gap-3 p-4 bg-secondary/35 border border-border/30 rounded-xl">
+                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-slate-900 dark:text-white">
-                      Profile & Repositories Synced
+                    <h4 className="font-bold text-foreground text-sm">
+                      Profile Sync Active
                     </h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                      Both your profile information and repositories are synced with GitHub.
+                    <p className="text-xs text-muted-foreground mt-1 font-semibold leading-relaxed">
+                      DevPulse is authorized to keep your repository list and profile stats synced.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded">
-                  <div className="flex-shrink-0 mt-1">
-                    <svg
-                      className="w-5 h-5 text-blue-600 dark:text-blue-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
+                <div className="flex items-start gap-3 p-4 bg-secondary/35 border border-border/30 rounded-xl">
+                  <ShieldCheck className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-slate-900 dark:text-white">
-                      Secure Authentication
+                    <h4 className="font-bold text-foreground text-sm">
+                      Secure Access Token
                     </h4>
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                      Your GitHub token is securely stored and only used to fetch authorized data.
+                    <p className="text-xs text-muted-foreground mt-1 font-semibold leading-relaxed">
+                      GitHub Auth Token is encrypted at rest and stored securely.
                     </p>
                   </div>
                 </div>
@@ -408,97 +310,57 @@ export function GitHubProfileClient({ user }: { user: User }) {
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Sync Button */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700 sticky top-6">
+          {/* Sidebar Panel */}
+          <div className="space-y-6 lg:sticky lg:top-6">
+            
+            {/* Sync Button Card */}
+            <div className="bg-card/60 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
               <button
                 onClick={handleSync}
                 disabled={syncing}
-                className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all transform ${
+                className={`w-full py-3 px-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer text-sm ${
                   syncing
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg active:scale-95"
+                    ? "bg-muted text-muted-foreground cursor-not-allowed border border-border"
+                    : "bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/15 hover:scale-[1.02] active:scale-[0.98]"
                 }`}
               >
-                {syncing ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                        fill="none"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    Syncing...
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    Sync Now
-                  </div>
-                )}
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                <span>{syncing ? "Syncing..." : "Sync Now"}</span>
               </button>
 
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-3 text-center" suppressHydrationWarning>
+              <p className="text-[11px] font-semibold text-muted-foreground mt-3 text-center" suppressHydrationWarning>
                 Last synced: {formatDate(user.updatedAt)}
               </p>
             </div>
 
-            {/* Quick Stats */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-200 dark:border-slate-700">
-              <h3 className="font-bold text-slate-900 dark:text-white mb-4">
-                Quick Stats
+            {/* Quick Stats Panel */}
+            <div className="bg-card/60 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
+              <h3 className="font-bold text-foreground text-sm tracking-tight mb-4">
+                Overview
               </h3>
 
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-slate-600 dark:text-slate-300">
-                      Synced Repos
-                    </span>
-                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                      {repositories.length}
-                    </span>
-                  </div>
+              <div className="space-y-3 text-sm font-semibold">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Synced Repos</span>
+                  <span className="text-indigo-500">{repositories.length}</span>
                 </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-slate-600 dark:text-slate-300">
-                      Sync Status
-                    </span>
-                    <span className="text-xs font-bold px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded">
-                      Active
-                    </span>
-                  </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Token State</span>
+                  <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 bg-green-500/10 text-green-600 rounded">
+                    Active
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Info Card */}
-            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900 dark:to-indigo-800 rounded-lg p-4 border border-indigo-200 dark:border-indigo-700">
-              <h4 className="font-bold text-indigo-900 dark:text-indigo-100 mb-2">
-                💡 Pro Tip
+            {/* Pro Tip Card */}
+            <div className="bg-gradient-to-br from-indigo-500/5 to-violet-500/5 border border-indigo-500/10 rounded-2xl p-5">
+              <h4 className="font-bold text-indigo-600 dark:text-indigo-400 text-sm mb-2 flex items-center gap-1.5">
+                <Lightbulb className="w-4 h-4 text-indigo-500" />
+                <span>Sync Tip</span>
               </h4>
-              <p className="text-sm text-indigo-800 dark:text-indigo-200">
-                Sync your profile regularly to keep your repositories, stars, and forks
-                up to date.
+              <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
+                If you recently added repositories or stars on GitHub, hit &quot;Sync Now&quot; to bring them to DevPulse instantly!
               </p>
             </div>
           </div>

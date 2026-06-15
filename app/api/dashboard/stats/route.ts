@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/src/auth";
-import { getUserStats } from "@/src/lib/stats/stats.service";
-import { getUserByEmail } from "@/src/server/user/user.service";
+import { getUserStats } from "@/src/services/stats.service";
+import { getUserByEmail } from "@/src/services/user.service";
 
 export async function GET() {
   try {

@@ -33,6 +33,7 @@ model Repository {
   ownerId String
   owner User @relation(fields:[ownerId],references:[id], onDelete: Cascade)
   commits Commit[]
+  languages RepositoryLanguage[]
   stats Stats?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -42,7 +43,7 @@ model Repository {
 
 model Commit {
   id String @id @default(cuid())
-  sha String @unique
+  sha String
   message String
   author String
   authorAvatarUrl String?
@@ -50,6 +51,8 @@ model Commit {
   repositoryId String
   repository Repository @relation(fields:[repositoryId],references:[id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@unique([repositoryId, sha])
 }
 
 model Stats{
@@ -72,4 +75,19 @@ model Activity {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model RepositoryLanguage {
+  id           String @id @default(cuid())
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  name         String
+  bytes        Int
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([repositoryId, name])
 }

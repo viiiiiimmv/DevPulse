@@ -9,7 +9,7 @@ import { getToken } from "next-auth/jwt";
 import Github, { type GithubProfile } from "next-auth/providers/github";
 
 import { prisma } from "@/src/server/prisma/client";
-import { logActivity } from "@/src/lib/activitylogger";
+import { logActivity } from "@/src/services/activity.service";
 
 type AuthRedirectOptions = {
   callbackUrl?: string;

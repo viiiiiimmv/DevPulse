@@ -1,9 +1,9 @@
 import { auth } from "@/src/auth";
 import { getUserByEmail } from "@/src/services/user.service";
 import { redirect } from "next/navigation";
-import { GitHubProfileClient } from "./github-profile-client";
+import { ReposClient } from "./repos-client";
 
-export default async function GitHubProfilePage() {
+export default async function ReposPage() {
   const session = await auth();
 
   if (!session?.user?.email) {
@@ -17,6 +17,6 @@ export default async function GitHubProfilePage() {
   }
 
   return (
-    <GitHubProfileClient user={user} />
+    <ReposClient user={user} />
   );
 }

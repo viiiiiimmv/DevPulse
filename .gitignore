@@ -41,3 +41,21 @@ yarn-error.log*
 next-env.d.ts
 
 /app/generated/prisma
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# local databases
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# secrets and credentials
+secrets.json
+credentials.json
+*.key
+*.pub
