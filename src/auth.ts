@@ -11,6 +11,10 @@ import Github, { type GithubProfile } from "next-auth/providers/github";
 import { prisma } from "@/src/server/prisma/client";
 import { logActivity } from "@/src/services/activity.service";
 
+const githubClientId = process.env.GITHUB_CLIENT_ID ?? process.env.GITHUB_ID;
+const githubClientSecret =
+  process.env.GITHUB_CLIENT_SECRET ?? process.env.GITHUB_SECRET;
+
 type AuthRedirectOptions = {
   callbackUrl?: string;
   redirectTo?: string;
@@ -33,8 +37,8 @@ function isGitHubProfile(profile: unknown): profile is GithubProfile {
 export const authOptions: NextAuthOptions = {
   providers: [
     Github({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
+      clientId: githubClientId!,
+      clientSecret: githubClientSecret!,
       allowDangerousEmailAccountLinking: true,
     }),
   ],

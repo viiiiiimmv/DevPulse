@@ -34,6 +34,9 @@ Edit `.env.local` with your credentials:
 # Database URL
 DATABASE_URL="postgresql://postgres:your_password@localhost:5432/devpulse"
 
+# Redis URL for BullMQ background sync
+REDIS_URL="redis://localhost:6379"
+
 # GitHub OAuth Credentials (from https://github.com/settings/developers)
 GITHUB_ID="your_github_app_id"
 GITHUB_SECRET="your_github_app_secret"
@@ -86,6 +89,9 @@ The application will be available at: http://localhost:3000
 ✓ Activity logging
 ✓ Dashboard with user information
 ✓ Sync button to fetch latest GitHub data
+✓ Redis/BullMQ background repository sync
+✓ Daily, weekly, monthly, repository, and language analytics APIs
+✓ Live dashboard sync completion events
 
 ## Available Routes
 

@@ -1,8 +1,8 @@
 import { auth, signOut } from "@/src/auth";
-import { getUserByEmail } from "@/src/services/user.service";
 import { getDashboardStats, getRecentActivity, getDashboardCommits } from "@/src/services/dashboard.service";
 import { redirect } from "next/navigation";
 import { DashboardContent } from "./dashboard-content";
+import { getCurrentUser } from "@/src/services/session.service";
 
 async function handleLogout() {
   "use server";
@@ -14,11 +14,11 @@ async function handleLogout() {
 export default async function DashboardPage() {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user) {
     redirect("/login");
   }
 
-  const user = await getUserByEmail(session.user.email);
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");

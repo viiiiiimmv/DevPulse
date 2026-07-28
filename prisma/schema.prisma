@@ -25,7 +25,7 @@ model User{
 
 model Repository {
   id String @id @default(cuid())
-  githubRepoId String @unique
+  githubRepoId String
   name String
   description String?
   stars Int @default(0)
@@ -39,6 +39,8 @@ model Repository {
   updatedAt DateTime @updatedAt
   isPrivate Boolean
   githubUpdatedAt DateTime
+
+  @@unique([ownerId, githubRepoId])
 }
 
 model Commit {

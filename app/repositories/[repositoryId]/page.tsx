@@ -1,8 +1,10 @@
 import { getRepositoryById } from "@/src/services/repository.service";
 import { getLanguageStats } from "@/src/services/language.service";
-import { notFound } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { CommitsList } from "./commits-list";
+import { auth } from "@/src/auth";
+import { getCurrentUser } from "@/src/services/session.service";
 import { 
   ArrowLeft, 
   Star, 
@@ -19,12 +21,23 @@ export default async function RepositoryDetailsPage(
   { params }: { params: Promise<{ repositoryId: string }> }
 ) {
   const { repositoryId } = await params;
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
   
   let repository;
   let languageStats;
   try {
-    repository = await getRepositoryById(repositoryId);
-    languageStats = await getLanguageStats(repositoryId);
+    repository = await getRepositoryById(repositoryId, user.id);
+    languageStats = await getLanguageStats(repositoryId, user.id);
   } catch (error) {
     console.error("Repository Details Error:", error);
     notFound();

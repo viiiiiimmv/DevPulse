@@ -1,8 +1,12 @@
 import { prisma } from "@/src/server/prisma/client";
+import { NotFoundError } from "@/src/services/session.service";
 
-export async function getRepositoryById(repositoryId: string) {
-  const repository = await prisma.repository.findUnique({
-    where: { id: repositoryId },
+export async function getRepositoryById(repositoryId: string, ownerId?: string) {
+  const repository = await prisma.repository.findFirst({
+    where: {
+      id: repositoryId,
+      ...(ownerId ? { ownerId } : {}),
+    },
     include: {
       stats: true,
       languages: true,
@@ -11,7 +15,7 @@ export async function getRepositoryById(repositoryId: string) {
   });
 
   if (!repository) {
-    throw new Error("Repository not found");
+    throw new NotFoundError("Repository not found");
   }
 
   return repository;

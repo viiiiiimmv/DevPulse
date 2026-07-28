@@ -1,17 +1,23 @@
 import { NextResponse } from "next/server";
-import { getUserStats } from "@/src/services/stats.service";
+
+import { getDeveloperSummary } from "@/src/services/analytics.service";
 import { requireCurrentUser, UnauthorizedError } from "@/src/services/session.service";
 
 export async function GET() {
   try {
     const user = await requireCurrentUser();
-    const stats = await getUserStats(user.id);
-    return NextResponse.json({ success: true, stats });
+    const data = await getDeveloperSummary(user.id);
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("Failed to fetch dashboard stats:", error);
+    console.error("Failed to fetch developer summary:", error);
     if (error instanceof UnauthorizedError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
+
+    return NextResponse.json(
+      { error: "Failed to fetch developer summary" },
+      { status: 500 },
+    );
   }
 }

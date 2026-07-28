@@ -1,16 +1,16 @@
 import { auth } from "@/src/auth";
-import { getUserByEmail } from "@/src/services/user.service";
 import { redirect } from "next/navigation";
 import { GitHubProfileClient } from "./github-profile-client";
+import { getCurrentUser } from "@/src/services/session.service";
 
 export default async function GitHubProfilePage() {
   const session = await auth();
 
-  if (!session?.user?.email) {
+  if (!session?.user) {
     redirect("/login");
   }
 
-  const user = await getUserByEmail(session.user.email);
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");

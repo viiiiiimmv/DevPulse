@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { 
@@ -71,12 +71,60 @@ export function DashboardContent({
   const commitsPerPage = 8;
   const router = useRouter();
 
+  useEffect(() => {
+    const events = new EventSource("/api/sync/events");
+
+    events.addEventListener("devpulse", (event) => {
+      const data = JSON.parse(event.data) as {
+        type: string;
+        payload?: {
+          syncedRepositories?: number;
+          fetchedCommits?: number;
+          syncedLanguages?: number;
+          error?: string;
+        };
+      };
+
+      if (data.type === "GITHUB_REPOSITORY_SYNC_STARTED") {
+        setMessage({
+          text: "GitHub sync started. I’ll update the dashboard when it finishes.",
+          type: "success",
+        });
+      }
+
+      if (data.type === "GITHUB_REPOSITORIES_SYNCED") {
+        setLoading(false);
+        setMessage({
+          text: `Sync complete: ${data.payload?.syncedRepositories ?? 0} repositories, ${data.payload?.fetchedCommits ?? 0} commits, ${data.payload?.syncedLanguages ?? 0} language entries.`,
+          type: "success",
+        });
+        router.refresh();
+      }
+
+      if (data.type === "GITHUB_SYNC_JOB_FAILED") {
+        setLoading(false);
+        setMessage({
+          text: data.payload?.error ?? "GitHub sync failed",
+          type: "error",
+        });
+      }
+    });
+
+    events.onerror = () => {
+      events.close();
+    };
+
+    return () => {
+      events.close();
+    };
+  }, [router]);
+
   const handleSync = async () => {
     setLoading(true);
     setMessage(null);
 
     try {
-      const response = await fetch("/api/github/repos", {
+      const response = await fetch("/api/github/repos?background=true", {
         method: "POST",
       });
 
@@ -87,19 +135,24 @@ export function DashboardContent({
       }
 
       setMessage({
-        text: `Successfully synced!`,
+        text: data.queued
+          ? "GitHub sync queued. The dashboard will refresh when it completes."
+          : "Successfully synced!",
         type: "success",
       });
-      
-      // Refresh the page to load new data from server
-      router.refresh();
+
+      if (data.queued) {
+        setLoading(false);
+      } else {
+        router.refresh();
+        setLoading(false);
+      }
       
     } catch (error) {
       setMessage({
         text: error instanceof Error ? error.message : "Failed to sync GitHub data",
         type: "error",
       });
-    } finally {
       setLoading(false);
     }
   };
