@@ -66,28 +66,29 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
   // Render unauthenticated top header
   if (!isAuthenticated) {
     return (
-      <header className="fixed top-0 left-0 right-0 z-50 h-16 backdrop-blur-md bg-background/70 border-b border-border/40 transition-all duration-300">
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 backdrop-blur-md bg-background/80 border-b border-border/50 transition-all duration-300">
         <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <Activity className="w-4 h-4 text-white animate-pulse" />
+          <Link href="/" className="flex items-center gap-2.5 group" aria-label="DevPulse home">
+            <div className="w-8 h-8 rounded-md bg-primary/95 flex items-center justify-center shadow-sm shadow-primary/15 group-hover:scale-105 transition-transform">
+              <Activity className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-xl bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent tracking-tight">
+            <span className="font-mono text-lg font-bold tracking-tight text-foreground">
               DevPulse
             </span>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-lg border border-border/50 bg-card/50 text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all hover:scale-105 active:scale-95"
+              className="p-2.5 rounded-md border border-border bg-card/80 text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all hover:-translate-y-0.5"
               aria-label="Toggle theme"
+              title="Toggle theme"
             >
               {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <Link
               href="/login"
-              className="px-4 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-2"
+              className="inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/10 transition-transform hover:-translate-y-0.5 hover:bg-primary/90"
             >
               <FaGithub className="w-4 h-4" />
               Sign In
@@ -100,37 +101,33 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
 
   return (
     <>
-      {/* Authenticated Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col fixed top-0 bottom-0 left-0 w-20 border-r border-border/40 bg-card/60 backdrop-blur-lg z-40 transition-all duration-300 overflow-visible">
-        {/* Brand */}
-        <div className="h-16 border-b border-border/40 flex items-center justify-center">
-          <Link href="/" className="flex items-center justify-center">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/20 hover:scale-110 transition-transform">
-              <Activity className="w-4 h-4 text-white" />
+      <aside className="hidden md:flex flex-col fixed top-0 bottom-0 left-0 w-20 border-r border-border/50 bg-card/80 backdrop-blur-md z-40 transition-all duration-300">
+        <div className="h-16 border-b border-border/50 flex items-center justify-center">
+          <Link href="/dashboard" className="flex items-center justify-center" aria-label="DevPulse dashboard">
+            <div className="w-8 h-8 rounded-md bg-primary/95 flex items-center justify-center shadow-sm shadow-primary/15 transition-transform hover:scale-105">
+              <Activity className="w-4 h-4 text-primary-foreground" />
             </div>
           </Link>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 px-3 py-6 space-y-4 flex flex-col items-center">
+        <nav className="flex-1 px-3 py-6 space-y-3 flex flex-col items-center">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const active = isActive(link.href);
             return (
-              <div key={link.href} className="relative flex justify-start pl-4 w-full">
+              <div key={link.href} className="relative flex justify-start pl-3 w-full">
                 <Link
-                  key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-0 hover:gap-3 w-12 hover:w-44 h-12 px-3.5 rounded-full transition-all duration-300 group ${
+                  aria-label={link.label}
+                  title={link.label}
+                  className={`group relative flex h-11 w-11 items-center justify-center rounded-md border transition-all duration-200 ${
                     active
-                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/15"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/75 border border-transparent hover:border-border/40"
+                      ? "border-primary/30 bg-primary text-primary-foreground shadow-sm shadow-primary/10"
+                      : "border-transparent bg-transparent text-muted-foreground hover:border-border/50 hover:bg-secondary/70 hover:text-foreground"
                   }`}
                 >
-                  <Icon className={`w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110 ${
-                    active ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground"
-                  }`} />
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-250 whitespace-nowrap text-xs font-bold uppercase tracking-wider select-none overflow-hidden">
+                  <Icon className="w-4 h-4" />
+                  <span className="pointer-events-none absolute left-[calc(100%+0.75rem)] top-1/2 -translate-y-1/2 rounded-sm border border-border bg-card px-2 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground opacity-0 shadow-sm transition-opacity duration-200 group-hover:opacity-100">
                     {link.label}
                   </span>
                 </Link>
@@ -139,49 +136,32 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
           })}
         </nav>
 
-        {/* Bottom Panel */}
-        <div className="p-3 border-t border-border/40 space-y-4 flex flex-col items-center">
-          {/* Theme Toggle Button */}
-          <div className="relative flex justify-start pl-4 w-full">
+        <div className="p-3 border-t border-border/50 space-y-3 flex flex-col items-center">
+          <div className="relative flex justify-start pl-3 w-full">
             <button
               onClick={toggleTheme}
-              className="flex items-center gap-0 hover:gap-3 w-12 hover:w-44 h-12 px-3.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/75 border border-transparent hover:border-border/40 transition-all duration-300 group cursor-pointer"
+              aria-label="Toggle theme"
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className="flex h-11 w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-muted-foreground transition-all duration-200 hover:border-border/50 hover:bg-secondary/70 hover:text-foreground"
             >
-              {theme === "dark" ? (
-                <>
-                  <Sun className="w-5 h-5 flex-shrink-0 text-amber-500 group-hover:rotate-45 transition-transform" />
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-250 whitespace-nowrap text-xs font-bold uppercase tracking-wider select-none overflow-hidden">
-                    Light Mode
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-5 h-5 flex-shrink-0 text-indigo-500 group-hover:-rotate-12 transition-transform" />
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-250 whitespace-nowrap text-xs font-bold uppercase tracking-wider select-none overflow-hidden">
-                    Dark Mode
-                  </span>
-                </>
-              )}
+              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-indigo-500" />}
             </button>
           </div>
 
-          {/* Logout Button */}
-          <div className="relative flex justify-start pl-4 w-full">
+          <div className="relative flex justify-start pl-3 w-full">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-0 hover:gap-3 w-12 hover:w-44 h-12 px-3.5 rounded-full text-red-600 dark:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-300 group cursor-pointer"
+              aria-label="Logout"
+              title="Logout"
+              className="flex h-11 w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-red-600 transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/5 dark:text-red-400"
             >
-              <LogOut className="w-5 h-5 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-250 whitespace-nowrap text-xs font-bold uppercase tracking-wider select-none overflow-hidden">
-                Logout
-              </span>
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Authenticated Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border/40 bg-card/85 backdrop-blur-md z-40 px-3 flex items-center justify-around transition-colors duration-300">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t border-border/50 bg-card/85 backdrop-blur-md z-40 px-3 flex items-center justify-around">
         {navLinks.map((link) => {
           const Icon = link.icon;
           const active = isActive(link.href);
@@ -189,6 +169,7 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
             <Link
               key={link.href}
               href={link.href}
+              aria-label={link.label}
               className={`flex flex-col items-center gap-1 p-2 transition-colors duration-200 ${
                 active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               }`}
@@ -199,21 +180,19 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
           );
         })}
 
-        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="flex flex-col items-center gap-1 p-2 text-muted-foreground hover:text-foreground"
           aria-label="Toggle theme"
+          className="flex flex-col items-center gap-1 p-2 text-muted-foreground hover:text-foreground"
         >
           {theme === "dark" ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-indigo-500" />}
           <span className="text-[10px] font-medium">Theme</span>
         </button>
 
-        {/* Logout */}
         <button
           onClick={handleLogout}
-          className="flex flex-col items-center gap-1 p-2 text-red-600 dark:text-red-400"
           aria-label="Logout"
+          className="flex flex-col items-center gap-1 p-2 text-red-600 dark:text-red-400"
         >
           <LogOut className="w-5 h-5" />
           <span className="text-[10px] font-medium">Logout</span>

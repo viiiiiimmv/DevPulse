@@ -4,16 +4,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { 
-  FolderGit, 
-  GitCommit, 
-  Star, 
-  GitFork, 
-  RefreshCw, 
-  LogOut, 
+import {
+  FolderGit,
+  GitCommit,
+  Star,
+  GitFork,
+  RefreshCw,
+  LogOut,
   ExternalLink,
   Activity as ActivityIcon,
-  Calendar
+  Calendar,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 export interface DashboardUser {
@@ -52,21 +53,21 @@ export interface DashboardCommit {
   repository: CommitRepo;
 }
 
-export function DashboardContent({ 
-  user, 
+export function DashboardContent({
+  user,
   stats,
   activities,
   commits,
-  onLogout 
-}: { 
-  user: DashboardUser; 
+  onLogout,
+}: {
+  user: DashboardUser;
   stats: DashboardStats;
   activities: Activity[];
   commits: DashboardCommit[];
-  onLogout: () => Promise<void> 
+  onLogout: () => Promise<void>;
 }) {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [commitPage, setCommitPage] = useState(1);
   const commitsPerPage = 8;
   const router = useRouter();
@@ -147,7 +148,6 @@ export function DashboardContent({
         router.refresh();
         setLoading(false);
       }
-      
     } catch (error) {
       setMessage({
         text: error instanceof Error ? error.message : "Failed to sync GitHub data",
@@ -157,160 +157,170 @@ export function DashboardContent({
     }
   };
 
-  const formatDate = (dateString: Date) => {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
+  const formatDate = (dateString: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
     }).format(new Date(dateString));
-  };
+
+  const lastSynced = activities[0]?.createdAt ? formatDate(activities[0].createdAt) : "No sync yet";
+
+  const metricCards = [
+    { label: "Repositories", value: stats.totalRepositories, icon: FolderGit, color: "text-indigo-500", desc: "Tracked projects", href: "/repos" },
+    { label: "Total Commits", value: stats.totalCommits, icon: GitCommit, color: "text-violet-500", desc: "Synced commits", href: "/analytics" },
+    { label: "Stars Earned", value: stats.totalStars, icon: Star, color: "text-amber-500", desc: "Repository stars" },
+    { label: "Forks Sync", value: stats.totalForks, icon: GitFork, color: "text-pink-500", desc: "Forked work" },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      {/* Header section */}
-      <div className="bg-card/60 backdrop-blur-lg border border-border/40 rounded-2xl p-6 shadow-sm flex flex-wrap items-center gap-6 justify-between transition-colors duration-300">
+    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-8">
+      <header className="dp-card-shell flex flex-wrap items-center justify-between gap-5 bg-card/80 p-5 sm:p-6">
         <div className="flex items-center gap-4">
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-full blur opacity-25 group-hover:opacity-40 transition-opacity" />
+          <div className="relative">
             <img
-              src={user.avatarUrl || "https://via.placeholder.com/64"}
-              alt="Profile Picture"
-              className="relative w-16 h-16 rounded-full border border-border/50 shadow-sm"
+              src={user.avatarUrl || "https://via.placeholder.com/72"}
+              alt={user.username}
+              className="h-16 w-16 rounded-full border border-border bg-secondary object-cover shadow-sm"
             />
           </div>
-          <div>
-            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">
+
+          <div className="space-y-1.5">
+            <p className="dp-label">Developer workspace</p>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight sm:text-3xl">
               Welcome, {user.name || user.username}
             </h1>
-            <p className="text-sm font-semibold text-muted-foreground">
-              @{user.username}
-            </p>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <span>@{user.username}</span>
+              <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-block" />
+              <span className="inline-flex items-center gap-1.5">
+                <BriefcaseBusiness className="h-3.5 w-3.5" />
+                Last synced {lastSynced}
+              </span>
+            </div>
           </div>
         </div>
-        
-        <div className="flex gap-3 items-center">
+
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={handleSync}
             disabled={loading}
-            className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold hover:shadow-lg hover:shadow-primary/15 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 flex items-center gap-2 cursor-pointer text-sm"
+            className="inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/10 transition-all hover:-translate-y-0.5 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Sync GitHub Data</span>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <span>{loading ? "Synchronizing..." : "Sync GitHub Data"}</span>
           </button>
-          
+
           <form action={onLogout}>
             <button
               type="submit"
-              className="px-4 py-2.5 rounded-xl border border-border/50 bg-card hover:bg-secondary/80 text-muted-foreground hover:text-foreground font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2 cursor-pointer text-sm"
+              className="inline-flex items-center gap-2 rounded-md border border-border bg-secondary/70 px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-all hover:-translate-y-0.5 hover:border-border hover:text-foreground"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="h-4 w-4" />
               <span>Logout</span>
             </button>
           </form>
         </div>
-      </div>
+      </header>
 
       {message && (
         <div
-          className={`p-4 rounded-xl border font-medium text-sm transition-all ${
+          className={`rounded-md border p-3 text-sm font-medium ${
             message.type === "success"
-              ? "bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400"
-              : "bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-400"
+              ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+              : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400"
           }`}
         >
           {message.text}
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Repositories", value: stats.totalRepositories, icon: FolderGit, color: "text-indigo-500", href: "/repos" },
-          { label: "Total Commits", value: stats.totalCommits, icon: GitCommit, color: "text-violet-500", href: "/analytics" },
-          { label: "Stars Earned", value: stats.totalStars, icon: Star, color: "text-amber-500" },
-          { label: "Forks Sync", value: stats.totalForks, icon: GitFork, color: "text-pink-500" }
-        ].map((item, index) => {
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {metricCards.map((item) => {
           const Icon = item.icon;
           const cardBody = (
-            <div className="bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all hover:-translate-y-0.5 group duration-300 h-full flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{item.label}</h3>
-                <Icon className={`w-4 h-4 ${item.color} group-hover:scale-110 transition-transform`} />
+            <div className="group flex h-full min-h-[150px] flex-col justify-between rounded-xl border border-border bg-card/80 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md">
+              <div className="flex items-start justify-between gap-3">
+                <span className="dp-label">{item.label}</span>
+                <Icon className={`h-4 w-4 ${item.color} transition-transform group-hover:scale-110`} />
               </div>
-              <p className="text-3xl font-extrabold mt-3 text-foreground tracking-tight">{item.value}</p>
+
+              <div>
+                <p className="dp-metric-value mt-3 text-3xl">{item.value}</p>
+                <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{item.desc}</p>
+              </div>
             </div>
           );
 
           if (item.href) {
             return (
-              <Link key={index} href={item.href} className="block cursor-pointer">
+              <Link key={item.label} href={item.href} className="block">
                 {cardBody}
               </Link>
             );
           }
 
-          return <div key={index}>{cardBody}</div>;
+          return <div key={item.label}>{cardBody}</div>;
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Recent Commits (takes up 2/3 of space on large screens) */}
-        <div className="lg:col-span-2 border border-border/40 rounded-2xl bg-card/60 backdrop-blur-md shadow-sm overflow-hidden transition-colors duration-300">
-          <div className="p-5 border-b border-border/40 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
-              <GitCommit className="w-5 h-5 text-indigo-500" />
-              <span>Recent GitHub Commits</span>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:items-start">
+        <div className="lg:col-span-2 overflow-hidden rounded-xl border border-border bg-card/80 shadow-sm">
+          <div className="flex items-center justify-between border-b border-border/60 p-5">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+              <GitCommit className="h-5 w-5 text-indigo-500" />
+              Recent GitHub Commits
             </h2>
-            <span className="text-xs bg-secondary/80 font-bold px-2.5 py-1 rounded-full text-muted-foreground animate-pulse">
-              Latest Edits
+            <span className="rounded-full border border-border bg-secondary/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+              Latest edits
             </span>
           </div>
-          
-          <div className="divide-y divide-border/25">
+
+          <div className="divide-y divide-border/60">
             {commits.length === 0 ? (
-              <p className="p-10 text-center text-muted-foreground font-semibold text-sm">
-                No recent commits found. Click &quot;Sync GitHub Data&quot; to fetch your latest edits!
-              </p>
+              <div className="p-10 text-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  No recent commits found. Sync GitHub data to populate your activity feed.
+                </p>
+              </div>
             ) : (
               commits.slice((commitPage - 1) * commitsPerPage, commitPage * commitsPerPage).map((commit) => (
-                <div key={commit.id} className="p-5 hover:bg-secondary/25 transition-colors duration-150 flex items-start gap-4 group">
-                  {/* Author Avatar */}
+                <div key={commit.id} className="flex items-start gap-4 p-4 transition-colors duration-150 hover:bg-secondary/35">
                   {commit.authorAvatarUrl ? (
-                    <img 
-                      src={commit.authorAvatarUrl} 
-                      alt={commit.author} 
-                      className="w-10 h-10 rounded-full border border-border/40 bg-secondary object-cover"
+                    <img
+                      src={commit.authorAvatarUrl}
+                      alt={commit.author}
+                      className="h-10 w-10 rounded-full border border-border bg-secondary object-cover"
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded-full border border-border/40 bg-secondary flex items-center justify-center text-muted-foreground font-bold text-sm">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary text-sm font-bold text-muted-foreground">
                       {commit.author.charAt(0).toUpperCase()}
                     </div>
                   )}
 
-                  {/* Commit Text */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground truncate group-hover:text-primary transition-colors duration-150">
-                      {commit.message.split('\n')[0]}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-foreground group-hover:text-primary">
+                      {commit.message.split("\n")[0]}
                     </p>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs font-semibold text-muted-foreground">
-                      <span className="text-foreground/90">{commit.author}</span>
-                      <span className="text-muted-foreground/40">&bull;</span>
-                      <Link 
-                        href={`/repositories/${commit.repositoryId}`}
-                        className="text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-0.5"
-                      >
+
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-medium text-muted-foreground">
+                      <span className="text-foreground">{commit.author}</span>
+                      <span>•</span>
+                      <Link href={`/repositories/${commit.repositoryId}`} className="inline-flex items-center gap-1 text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400">
                         <span>{commit.repository.name}</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="h-3 w-3" />
                       </Link>
-                      <span className="text-muted-foreground/40">&bull;</span>
-                      <span className="flex items-center gap-1 font-medium">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{formatDate(commit.committedAt)}</span>
+                      <span>•</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatDate(commit.committedAt)}
                       </span>
                     </div>
                   </div>
 
-                  {/* Commit SHA */}
-                  <div className="hidden sm:block flex-shrink-0">
-                    <span className="inline-flex items-center rounded-lg bg-secondary border border-border/30 px-2.5 py-1 text-xs font-bold text-muted-foreground font-mono leading-none">
+                  <div className="hidden shrink-0 sm:block">
+                    <span className="inline-flex items-center rounded-md border border-border bg-secondary px-2 py-1 font-mono text-[10px] font-bold text-muted-foreground">
                       {commit.sha.substring(0, 7)}
                     </span>
                   </div>
@@ -319,24 +329,23 @@ export function DashboardContent({
             )}
           </div>
 
-          {/* Commits Pagination Footer */}
           {commits.length > commitsPerPage && (
-            <div className="p-4 border-t border-border/40 flex items-center justify-between bg-secondary/15 font-semibold text-xs transition-colors duration-300">
-              <p className="text-muted-foreground">
-                Showing <span className="text-foreground">{((commitPage - 1) * commitsPerPage) + 1}</span> to <span className="text-foreground">{Math.min(commitPage * commitsPerPage, commits.length)}</span> of <span className="text-foreground">{commits.length}</span> commits
+            <div className="flex items-center justify-between gap-3 border-t border-border/60 bg-secondary/25 p-3 text-xs font-semibold text-muted-foreground">
+              <p>
+                Showing {((commitPage - 1) * commitsPerPage) + 1} to {Math.min(commitPage * commitsPerPage, commits.length)} of {commits.length} commits
               </p>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setCommitPage(p => Math.max(1, p - 1))}
+                  onClick={() => setCommitPage((p) => Math.max(1, p - 1))}
                   disabled={commitPage === 1}
-                  className="px-3.5 py-1.5 border border-border/50 bg-card rounded-xl text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 hover:bg-secondary/70 transition-all cursor-pointer flex items-center select-none"
+                  className="rounded-md border border-border bg-card px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Previous
+                  Prev
                 </button>
                 <button
-                  onClick={() => setCommitPage(p => Math.min(Math.ceil(commits.length / commitsPerPage), p + 1))}
+                  onClick={() => setCommitPage((p) => Math.min(Math.ceil(commits.length / commitsPerPage), p + 1))}
                   disabled={commitPage >= Math.ceil(commits.length / commitsPerPage)}
-                  className="px-3.5 py-1.5 border border-border/50 bg-card rounded-xl text-xs text-muted-foreground hover:text-foreground disabled:opacity-40 hover:bg-secondary/70 transition-all cursor-pointer flex items-center select-none"
+                  className="rounded-md border border-border bg-card px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -345,30 +354,31 @@ export function DashboardContent({
           )}
         </div>
 
-        {/* Recent Activity Feed (takes up 1/3 of space on large screens) */}
-        <div className="border border-border/40 rounded-2xl bg-card/60 backdrop-blur-md shadow-sm overflow-hidden transition-colors duration-300">
-          <div className="p-5 border-b border-border/40">
-            <h2 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
-              <ActivityIcon className="w-5 h-5 text-violet-500" />
-              <span>Activity Log</span>
+        <aside className="overflow-hidden rounded-xl border border-border bg-card/80 shadow-sm">
+          <div className="border-b border-border/60 p-5">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+              <ActivityIcon className="h-5 w-5 text-violet-500" />
+              Activity Log
             </h2>
           </div>
+
           <div className="p-5">
             {activities.length === 0 ? (
-              <p className="text-muted-foreground text-sm font-semibold py-4">No recent activity synced.</p>
+              <div className="rounded-md border border-dashed border-border bg-secondary/30 p-6 text-center">
+                <p className="text-sm font-medium text-muted-foreground">No recent system activity yet.</p>
+              </div>
             ) : (
-              <div className="relative pl-4 border-l border-border/50 space-y-6 py-2">
-                {activities.map(activity => (
-                  <div key={activity.id} className="relative group">
-                    {/* Activity Bullet Point */}
-                    <div className="absolute -left-[22.5px] top-1 w-3 h-3 rounded-full bg-primary border-2 border-background scale-100 group-hover:scale-125 transition-transform" />
+              <div className="relative space-y-6 border-l border-border/60 pl-4">
+                {activities.map((activity) => (
+                  <div key={activity.id} className="relative">
+                    <div className="absolute -left-[1.4rem] top-1 h-3 w-3 rounded-full border-2 border-background bg-primary" />
                     <div>
-                      <p className="font-semibold text-sm text-foreground capitalize tracking-wide">
+                      <p className="text-sm font-semibold capitalize text-foreground">
                         {activity.type.replace(/_/g, " ").toLowerCase()}
                       </p>
-                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-semibold mt-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{formatDate(activity.createdAt)}</span>
+                      <div className="mt-1 flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatDate(activity.createdAt)}
                       </div>
                     </div>
                   </div>
@@ -376,7 +386,7 @@ export function DashboardContent({
               </div>
             )}
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

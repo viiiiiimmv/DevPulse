@@ -3,14 +3,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  RefreshCw, 
-  Calendar, 
-  Mail, 
+import {
+  RefreshCw,
+  Calendar,
+  Mail,
   Code,
   CheckCircle2,
   Lightbulb,
-  ShieldCheck
+  ShieldCheck,
+  UserRound,
+  Sparkles,
 } from "lucide-react";
 
 interface GitHubProfileResponse {
@@ -55,16 +57,13 @@ interface User {
 export function GitHubProfileClient({ user }: { user: User }) {
   const router = useRouter();
   const [syncing, setSyncing] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [syncData, setSyncData] = useState<GitHubProfileResponse["profile"] | null>(null);
   const [repositories, setRepositories] = useState<Repository[]>([]);
 
   const fetchRepositories = async () => {
     try {
-      const response = await fetch("/api/github/repos", {
-        method: "GET",
-      });
-
+      const response = await fetch("/api/github/repos", { method: "GET" });
       const data = await response.json();
 
       if (!response.ok) {
@@ -91,11 +90,7 @@ export function GitHubProfileClient({ user }: { user: User }) {
     setMessage(null);
 
     try {
-      // First, sync the profile
-      const profileResponse = await fetch("/api/github/profile", {
-        method: "POST",
-      });
-
+      const profileResponse = await fetch("/api/github/profile", { method: "POST" });
       const profileData = await profileResponse.json();
 
       if (!profileResponse.ok) {
@@ -104,25 +99,18 @@ export function GitHubProfileClient({ user }: { user: User }) {
 
       setSyncData(profileData.profile);
 
-      // Then, sync the repositories
-      const reposResponse = await fetch("/api/github/repos", {
-        method: "POST",
-      });
-
+      const reposResponse = await fetch("/api/github/repos", { method: "POST" });
       const reposData = await reposResponse.json();
 
       if (!reposResponse.ok) {
         throw new Error(reposData.error || "Failed to sync repositories");
       }
 
-      // Fetch the newly synced repositories
       await fetchRepositories();
-
-      // Refresh the page data from the server to get the new user.updatedAt
       router.refresh();
 
       setMessage({
-        text: `✓ Successfully synced! Found ${reposData.syncedRepositories} repositories.`,
+        text: `Successfully synced! Found ${reposData.syncedRepositories} repositories.`,
         type: "success",
       });
     } catch (error) {
@@ -155,216 +143,128 @@ export function GitHubProfileClient({ user }: { user: User }) {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto space-y-8">
-        
-        {/* Header */}
-        <div className="border-b border-border/45 pb-6">
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight mb-2">
-            GitHub Profile
-          </h1>
-          <p className="text-sm font-semibold text-muted-foreground">
-            Manage, review, and synchronize your public GitHub data feed.
-          </p>
+    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-8">
+      <header className="border-b border-border/60 pb-6">
+        <p className="dp-label mb-2">Account connection</p>
+        <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
+          <UserRound className="h-8 w-8 text-indigo-500" />
+          GitHub Profile
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">Manage your connected GitHub identity and synchronization status.</p>
+      </header>
+
+      {message && (
+        <div className={`rounded-md border p-3 text-sm font-medium ${message.type === "success" ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400" : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-400"}`}>
+          {message.text}
+        </div>
+      )}
+
+      <div className="grid items-start gap-8 lg:grid-cols-[1.5fr_0.75fr]">
+        <div className="space-y-8">
+          <section className="rounded-xl border border-border bg-card/80 p-6 shadow-sm">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+              <img src={displayData.avatarUrl || "https://via.placeholder.com/120"} alt={displayData.username} className="h-24 w-24 rounded-full border border-border object-cover shadow-sm" />
+
+              <div className="space-y-2">
+                <p className="dp-label">GitHub Identity</p>
+                <h2 className="text-3xl font-bold tracking-tight text-foreground">{user.name || displayData.username}</h2>
+                <p className="text-muted-foreground">@{displayData.username}</p>
+                {displayData.bio && <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">{displayData.bio}</p>}
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3 border-t border-border/60 pt-5">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="inline-flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4" />Email</span>
+                <span className="text-foreground">{user.email || "Not public"}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="inline-flex items-center gap-2 text-muted-foreground"><Code className="h-4 w-4" />GitHub ID</span>
+                <span className="font-mono text-foreground">{user.githubId}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="inline-flex items-center gap-2 text-muted-foreground"><Calendar className="h-4 w-4" />Member since</span>
+                <span className="text-foreground">{formatDate(user.createdAt)}</span>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-border bg-card/80 p-4 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Public repos</p>
+              <p className="mt-2 text-3xl font-bold text-foreground">{repositories.length}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card/80 p-4 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Last synced</p>
+              <p className="mt-2 text-sm font-medium text-foreground" suppressHydrationWarning>{formatDate(user.updatedAt)}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card/80 p-4 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Stars received</p>
+              <p className="mt-2 text-3xl font-bold text-foreground">{repositories.reduce((sum, repo) => sum + repo.stars, 0)}</p>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+            <h3 className="text-lg font-bold text-foreground">GitHub connection</h3>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 text-green-500" />
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">Profile synchronization active</h4>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">DevPulse is authorized to keep the GitHub profile and repository list aligned with your connected account.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-4">
+                <ShieldCheck className="mt-0.5 h-5 w-5 text-indigo-500" />
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">Secure access</h4>
+                  <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Authentication credentials are handled through GitHub OAuth and stored securely without exposing token values in the UI.</p>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
 
-        {/* Message Alert */}
-        {message && (
-          <div
-            className={`p-4 rounded-xl font-medium text-sm border transition-all ${
-              message.type === "success"
-                ? "bg-green-500/10 border-green-500/30 text-green-700 dark:text-green-400"
-                : "bg-red-500/10 border-red-500/30 text-red-700 dark:text-red-400"
-            }`}
-          >
-            {message.text}
+        <aside className="space-y-6">
+          <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-semibold transition-all ${syncing ? "cursor-not-allowed border border-border bg-secondary text-muted-foreground" : "bg-primary text-primary-foreground hover:-translate-y-0.5"}`}
+            >
+              <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
+              {syncing ? "Syncing..." : "Sync Now"}
+            </button>
+            <p className="mt-3 text-center text-[11px] font-semibold text-muted-foreground" suppressHydrationWarning>
+              Last synced: {formatDate(user.updatedAt)}
+            </p>
           </div>
-        )}
 
-        <div className="grid gap-8 lg:grid-cols-4 items-start">
-          
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-8">
-            
-            {/* Profile Information */}
-            <div className="bg-card/60 backdrop-blur-md rounded-2xl p-6 border border-border/40 shadow-sm transition-colors duration-300">
-              <h2 className="text-lg font-bold text-foreground tracking-tight mb-6">
-                Profile Details
-              </h2>
-
-              <div className="flex flex-col sm:flex-row gap-6 mb-6">
-                <div className="relative group self-center sm:self-start">
-                  <div className="absolute -inset-0.5 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-full blur opacity-20 group-hover:opacity-35 transition-opacity" />
-                  <img
-                    src={displayData.avatarUrl || "https://via.placeholder.com/120"}
-                    alt={displayData.username}
-                    className="relative w-24 h-24 rounded-full border-2 border-border/40 shadow-md object-cover"
-                  />
-                </div>
-
-                <div className="flex-1 text-center sm:text-left">
-                  <h3 className="text-2xl font-extrabold text-foreground tracking-tight">
-                    {user.name || displayData.username}
-                  </h3>
-                  <p className="text-sm font-semibold text-muted-foreground mb-3">
-                    @{displayData.username}
-                  </p>
-                  {displayData.bio && (
-                    <p className="text-sm text-muted-foreground max-w-xl font-medium leading-relaxed">
-                      {displayData.bio}
-                    </p>
-                  )}
-                </div>
+          <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+            <h3 className="text-sm font-bold text-foreground">Overview</h3>
+            <div className="mt-4 space-y-3 text-sm font-medium">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Synced repositories</span>
+                <span className="font-bold text-indigo-500">{repositories.length}</span>
               </div>
-
-              <div className="border-t border-border/30 pt-6 space-y-3">
-                <div className="flex justify-between items-center text-sm font-medium">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <Mail className="w-4 h-4 text-muted-foreground/60" /> Email
-                  </span>
-                  <span className="text-foreground">
-                    {user.email || "Not public"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-sm font-medium">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <Code className="w-4 h-4 text-muted-foreground/60" /> GitHub ID
-                  </span>
-                  <span className="font-mono text-foreground">
-                    {user.githubId}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center text-sm font-medium">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-muted-foreground/60" /> Member Since
-                  </span>
-                  <span className="text-foreground">
-                    {formatDate(user.createdAt)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-card/50 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Public Repositories
-                </div>
-                <div className="text-3xl font-extrabold text-foreground mt-2 tracking-tight">
-                  {repositories.length}
-                </div>
-              </div>
-
-              <div className="bg-card/50 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Last Synced
-                </div>
-                <div className="text-sm font-mono text-foreground mt-3 leading-relaxed" suppressHydrationWarning>
-                  {formatDate(user.updatedAt)}
-                </div>
-              </div>
-
-              <div className="bg-card/50 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
-                <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Total Stars Received
-                </div>
-                <div className="text-3xl font-extrabold text-foreground mt-2 tracking-tight">
-                  {repositories.reduce((sum, repo) => sum + repo.stars, 0)}
-                </div>
-              </div>
-            </div>
-
-
-            {/* Sync Details */}
-            <div className="bg-card/60 backdrop-blur-md rounded-2xl p-6 border border-border/40 shadow-sm transition-colors duration-300">
-              <h3 className="text-base font-bold text-foreground mb-4 tracking-tight">
-                Authentication & Integration Profile
-              </h3>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="flex items-start gap-3 p-4 bg-secondary/35 border border-border/30 rounded-xl">
-                  <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-foreground text-sm">
-                      Profile Sync Active
-                    </h4>
-                    <p className="text-xs text-muted-foreground mt-1 font-semibold leading-relaxed">
-                      DevPulse is authorized to keep your repository list and profile stats synced.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 bg-secondary/35 border border-border/30 rounded-xl">
-                  <ShieldCheck className="w-5 h-5 text-indigo-500 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-foreground text-sm">
-                      Secure Access Token
-                    </h4>
-                    <p className="text-xs text-muted-foreground mt-1 font-semibold leading-relaxed">
-                      GitHub Auth Token is encrypted at rest and stored securely.
-                    </p>
-                  </div>
-                </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Connection status</span>
+                <span className="rounded-full border border-green-500/20 bg-green-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-green-600 dark:text-green-400">Connected</span>
               </div>
             </div>
           </div>
 
-          {/* Sidebar Panel */}
-          <div className="space-y-6 lg:sticky lg:top-6">
-            
-            {/* Sync Button Card */}
-            <div className="bg-card/60 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
-              <button
-                onClick={handleSync}
-                disabled={syncing}
-                className={`w-full py-3 px-4 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 cursor-pointer text-sm ${
-                  syncing
-                    ? "bg-muted text-muted-foreground cursor-not-allowed border border-border"
-                    : "bg-primary text-primary-foreground hover:shadow-lg hover:shadow-primary/15 hover:scale-[1.02] active:scale-[0.98]"
-                }`}
-              >
-                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
-                <span>{syncing ? "Syncing..." : "Sync Now"}</span>
-              </button>
-
-              <p className="text-[11px] font-semibold text-muted-foreground mt-3 text-center" suppressHydrationWarning>
-                Last synced: {formatDate(user.updatedAt)}
-              </p>
+          <div className="rounded-xl border border-indigo-500/20 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 p-5">
+            <div className="flex items-center gap-2 text-sm font-bold text-indigo-600 dark:text-indigo-400">
+              <Sparkles className="h-4 w-4" />
+              Sync tip
             </div>
-
-            {/* Quick Stats Panel */}
-            <div className="bg-card/60 backdrop-blur-md rounded-2xl p-5 border border-border/40 shadow-sm">
-              <h3 className="font-bold text-foreground text-sm tracking-tight mb-4">
-                Overview
-              </h3>
-
-              <div className="space-y-3 text-sm font-semibold">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Synced Repos</span>
-                  <span className="text-indigo-500">{repositories.length}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Token State</span>
-                  <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 bg-green-500/10 text-green-600 rounded">
-                    Active
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Pro Tip Card */}
-            <div className="bg-gradient-to-br from-indigo-500/5 to-violet-500/5 border border-indigo-500/10 rounded-2xl p-5">
-              <h4 className="font-bold text-indigo-600 dark:text-indigo-400 text-sm mb-2 flex items-center gap-1.5">
-                <Lightbulb className="w-4 h-4 text-indigo-500" />
-                <span>Sync Tip</span>
-              </h4>
-              <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
-                If you recently added repositories or stars on GitHub, hit &quot;Sync Now&quot; to bring them to DevPulse instantly!
-              </p>
-            </div>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Re-synchronizing keeps your latest repositories, stars, and activity data aligned with GitHub.
+            </p>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

@@ -3,20 +3,21 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { 
-  BarChart3, 
-  GitCommit, 
-  Calendar, 
-  Clock, 
-  Zap, 
-  Trophy, 
-  Star, 
-  GitFork, 
+import {
+  BarChart3,
+  GitCommit,
+  Calendar,
+  Clock,
+  Zap,
+  Trophy,
+  Star,
+  GitFork,
   ArrowRight,
   ExternalLink,
   AlertCircle,
   Code2,
-  TrendingUp
+  TrendingUp,
+  CircleGauge,
 } from "lucide-react";
 
 interface CommitStats {
@@ -97,33 +98,48 @@ interface DeveloperSummary {
   topLanguage: LanguageAnalytics["languages"][number] | null;
 }
 
-function BarSeries({ title, data }: { title: string; data: Timeline | null }) {
+function BarSeries({
+  title,
+  data,
+  emptyText,
+}: {
+  title: string;
+  data: Timeline | null;
+  emptyText: string;
+}) {
   const max = Math.max(...(data?.series.map((item) => item.commits) ?? [0]), 1);
+  const glyphs = data?.series ?? [];
+
+  if (!data || glyphs.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-border bg-card/80 p-6">
+        <p className="text-sm font-medium text-muted-foreground">{emptyText}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="border border-border/40 bg-card/60 rounded-2xl p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3 mb-5">
-        <h2 className="text-sm font-bold text-foreground tracking-tight">{title}</h2>
-        {data && (
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            Avg {data.average}
-          </span>
-        )}
+    <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-bold text-foreground">{title}</h2>
+        <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Avg {data.average}</span>
       </div>
-      <div className="h-44 flex items-end gap-1.5">
-        {(data?.series ?? []).map((point) => (
-          <div key={point.date} className="flex-1 min-w-0 flex flex-col items-center gap-2">
+
+      <div className="flex h-44 items-end gap-1.5">
+        {glyphs.map((point) => (
+          <div key={point.date} className="flex min-w-0 flex-1 flex-col items-center gap-2">
             <div
-              className="w-full max-w-5 rounded-t-md bg-indigo-500/80 hover:bg-indigo-500 transition-colors"
-              style={{ height: `${Math.max((point.commits / max) * 100, point.commits > 0 ? 8 : 2)}%` }}
+              className="w-full max-w-5 rounded-t-md bg-gradient-to-t from-primary/80 to-violet-400 transition-colors hover:from-primary"
+              style={{ height: `${Math.max((point.commits / max) * 100, point.commits > 0 ? 10 : 2)}%` }}
               title={`${point.label}: ${point.commits} commits`}
             />
           </div>
         ))}
       </div>
-      <div className="mt-4 flex justify-between text-[10px] font-semibold text-muted-foreground">
-        <span>{data?.series[0]?.label ?? "No data"}</span>
-        <span>{data?.series.at(-1)?.label ?? ""}</span>
+
+      <div className="mt-4 flex items-center justify-between text-[10px] font-semibold text-muted-foreground">
+        <span>{glyphs[0]?.label ?? "No data"}</span>
+        <span>{glyphs[glyphs.length - 1]?.label ?? ""}</span>
       </div>
     </div>
   );
@@ -140,22 +156,14 @@ export function AnalyticsClient({ user }: { user: User }) {
   const [summary, setSummary] = useState<DeveloperSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRange, setSelectedRange] = useState<"daily" | "weekly" | "monthly">("weekly");
 
   useEffect(() => {
     async function fetchAnalytics() {
       setLoading(true);
       setError(null);
       try {
-        const [
-          commitsRes,
-          reposRes,
-          dailyRes,
-          weeklyRes,
-          monthlyRes,
-          languagesRes,
-          distributionRes,
-          summaryRes,
-        ] = await Promise.all([
+        const [commitsRes, reposRes, dailyRes, weeklyRes, monthlyRes, languagesRes, distributionRes, summaryRes] = await Promise.all([
           fetch("/api/analytics/commits"),
           fetch("/api/analytics/repos"),
           fetch("/api/analytics/commits/daily"),
@@ -166,16 +174,7 @@ export function AnalyticsClient({ user }: { user: User }) {
           fetch("/api/analytics/summary"),
         ]);
 
-        if (
-          !commitsRes.ok ||
-          !reposRes.ok ||
-          !dailyRes.ok ||
-          !weeklyRes.ok ||
-          !monthlyRes.ok ||
-          !languagesRes.ok ||
-          !distributionRes.ok ||
-          !summaryRes.ok
-        ) {
+        if (!commitsRes.ok || !reposRes.ok || !dailyRes.ok || !weeklyRes.ok || !monthlyRes.ok || !languagesRes.ok || !distributionRes.ok || !summaryRes.ok) {
           throw new Error("Failed to fetch analytics statistics");
         }
 
@@ -188,12 +187,8 @@ export function AnalyticsClient({ user }: { user: User }) {
         const distributionJson = await distributionRes.json();
         const summaryJson = await summaryRes.json();
 
-        if (commitsJson.success) {
-          setCommitsData(commitsJson.data);
-        }
-        if (reposJson.success) {
-          setReposData(reposJson.data);
-        }
+        if (commitsJson.success) setCommitsData(commitsJson.data);
+        if (reposJson.success) setReposData(reposJson.data);
         if (dailyJson.success) setDailyData(dailyJson.data);
         if (weeklyJson.success) setWeeklyData(weeklyJson.data);
         if (monthlyJson.success) setMonthlyData(monthlyJson.data);
@@ -212,39 +207,26 @@ export function AnalyticsClient({ user }: { user: User }) {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-pulse">
-        {/* Header Skeleton */}
-        <div className="h-24 bg-card/40 border border-border/20 rounded-2xl" />
-        
-        {/* Stats Grid Skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="mx-auto max-w-6xl animate-pulse space-y-8 p-4 sm:p-6 lg:p-8">
+        <div className="h-24 rounded-xl border border-border/40 bg-card/40" />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="h-28 bg-card/40 border border-border/20 rounded-2xl" />
+            <div key={n} className="h-28 rounded-xl border border-border/40 bg-card/40" />
           ))}
         </div>
-
-        {/* Content Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 h-96 bg-card/40 border border-border/20 rounded-2xl" />
-          <div className="h-96 bg-card/40 border border-border/20 rounded-2xl" />
-        </div>
+        <div className="h-96 rounded-xl border border-border/40 bg-card/40" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center space-y-4">
-          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+      <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+        <div className="space-y-4 rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
           <h2 className="text-lg font-bold text-foreground">Analytics Unreachable</h2>
-          <p className="text-muted-foreground text-sm max-w-md mx-auto">
-            {error || "We encountered an issue fetching your commit activity. Please make sure database is initialized and retry."}
-          </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
-          >
+          <p className="mx-auto max-w-md text-sm text-muted-foreground">{error}</p>
+          <button onClick={() => window.location.reload()} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
             Retry Loading
           </button>
         </div>
@@ -255,134 +237,145 @@ export function AnalyticsClient({ user }: { user: User }) {
   const topRepo = reposData?.mostActiveRepo?.[0] || null;
   const rankings = reposData?.repoRankings || [];
   const monthlyCommits = commitsData?.monthlyCommits ?? commitsData?.monthlycommits ?? 0;
+  const selectedTimeline = selectedRange === "daily" ? dailyData : selectedRange === "weekly" ? weeklyData : monthlyData;
+
+  const summaryCards = summary
+    ? [
+        { label: "Productivity Score", value: `${summary.productivityScore} / 100`, icon: CircleGauge, note: "Based on synced activity patterns" },
+        { label: "Commit Streak", value: `${summary.currentStreak} days`, icon: Zap, note: "Current streak" },
+        { label: "Active Days", value: `${summary.activeDays}`, icon: Calendar, note: "Active in last 30 days" },
+        { label: "Top Language", value: summary.topLanguage?.name ?? "None", icon: Code2, note: "Most-used language" },
+      ]
+    : [];
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 transition-colors duration-300">
-      
-      {/* Page Header */}
-      <div className="border-b border-border/45 pb-6 flex items-center justify-between">
+    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-8">
+      <header className="flex items-center justify-between gap-4 border-b border-border/60 pb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-foreground tracking-tight mb-2 flex items-center gap-2">
-            <BarChart3 className="w-8 h-8 text-indigo-500" />
-            <span>GitHub Analytics</span>
+          <p className="dp-label mb-2">Developer insights</p>
+          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
+            <BarChart3 className="h-8 w-8 text-indigo-500" />
+            GitHub Analytics
           </h1>
-          <p className="text-sm font-semibold text-muted-foreground">
-            Monitor and visualize activity logs for {user.name} ({user.username}).
-          </p>
+          <p className="mt-2 text-sm text-muted-foreground">Monitor contribution patterns for {user.name || user.username}.</p>
         </div>
-        {user.avatarUrl && (
-          <img 
-            src={user.avatarUrl} 
-            alt={user.name} 
-            className="w-12 h-12 rounded-full border border-border/40 shadow-sm"
-          />
-        )}
-      </div>
 
-      {/* Commit Counters Grid */}
+        {user.avatarUrl && <img src={user.avatarUrl} alt={user.name || user.username} className="h-12 w-12 rounded-full border border-border object-cover" />}
+      </header>
+
       {commitsData && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
             { label: "Total Commits", value: commitsData.totalCommits, icon: GitCommit, color: "text-indigo-500", desc: "All-time synced commits" },
-            { label: "Last 30 Days", value: monthlyCommits, icon: Calendar, color: "text-violet-500", desc: "Commits in last 30 days" },
-            { label: "Last 7 Days", value: commitsData.weeklyCommits, icon: Clock, color: "text-sky-500", desc: "Commits in last week" },
-            { label: "Commits Today", value: commitsData.dailyCommits, icon: Zap, color: "text-amber-500", desc: "Commits pushed today" }
-          ].map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <div key={index} className="bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-300 group">
-                <div className="flex justify-between items-start">
-                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{item.label}</span>
-                  <Icon className={`w-4 h-4 ${item.color} group-hover:scale-110 transition-transform`} />
-                </div>
-                <p className="text-3xl font-extrabold mt-3 text-foreground tracking-tight">{item.value}</p>
-                <p className="text-[10px] font-semibold text-muted-foreground mt-2">{item.desc}</p>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Developer Summary */}
-      {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[
-            { label: "Productivity Score", value: summary.productivityScore, icon: TrendingUp, color: "text-emerald-500" },
-            { label: "Commit Streak", value: `${summary.currentStreak}d`, icon: Zap, color: "text-amber-500" },
-            { label: "Active Days", value: summary.activeDays, icon: Calendar, color: "text-sky-500" },
-            { label: "Top Language", value: summary.topLanguage?.name ?? "None", icon: Code2, color: "text-pink-500" },
+            { label: "Last 30 Days", value: monthlyCommits, icon: Calendar, color: "text-violet-500", desc: "Recent activity" },
+            { label: "Last 7 Days", value: commitsData.weeklyCommits, icon: Clock, color: "text-sky-500", desc: "Weekly activity" },
+            { label: "Commits Today", value: commitsData.dailyCommits, icon: Zap, color: "text-amber-500", desc: "Current-day activity" },
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <div key={item.label} className="border border-border/40 bg-card/50 rounded-2xl p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{item.label}</span>
-                  <Icon className={`w-4 h-4 ${item.color}`} />
+              <div key={item.label} className="rounded-xl border border-border bg-card/80 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/20">
+                <div className="flex items-start justify-between gap-3">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{item.label}</span>
+                  <Icon className={`h-4 w-4 ${item.color}`} />
                 </div>
-                <p className="text-2xl font-extrabold text-foreground mt-3 truncate">{item.value}</p>
+                <p className="dp-metric-value mt-3 text-3xl">{item.value}</p>
+                <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{item.desc}</p>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Commit Activity Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <BarSeries title="Daily Commit Activity" data={dailyData} />
-        <BarSeries title="Weekly Commit Activity" data={weeklyData} />
-        <BarSeries title="Monthly Commit Activity" data={monthlyData} />
+      {summary && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+          {summaryCards.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.label} className="rounded-xl border border-border bg-card/80 p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{item.label}</span>
+                  <Icon className="h-4 w-4 text-indigo-500" />
+                </div>
+                <p className="mt-3 text-2xl font-bold text-foreground">{item.value}</p>
+                <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{item.note}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="dp-label">Commit activity</p>
+            <h2 className="mt-1 text-xl font-bold text-foreground">Development activity</h2>
+          </div>
+
+          <div className="inline-flex gap-2 rounded-md border border-border bg-secondary/70 p-1">
+            {(["daily", "weekly", "monthly"] as const).map((range) => (
+              <button
+                key={range}
+                type="button"
+                onClick={() => setSelectedRange(range)}
+                className={`rounded-md px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.08em] transition-colors ${
+                  selectedRange === range ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-3 rounded-md border border-border/80 bg-secondary/35 p-3 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">Productivity score:</span> {summary ? `${summary.productivityScore} / 100` : "Unavailable"}. Based on synced activity, active days, and repository engagement patterns in the current dataset.
+        </div>
+
+        <BarSeries
+          title={`${selectedRange.charAt(0).toUpperCase() + selectedRange.slice(1)} commit activity`}
+          data={selectedTimeline}
+          emptyText="No activity data yet. Sync your GitHub repositories to establish a development history."
+        />
       </div>
 
-      {/* Details Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-        
-        {/* Repo Activity Rankings */}
-        <div className="md:col-span-2 border border-border/40 rounded-2xl bg-card/60 backdrop-blur-md shadow-sm overflow-hidden transition-colors duration-300">
-          <div className="p-5 border-b border-border/40">
-            <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-500" />
-              <span>Top Active Repositories</span>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:items-start">
+        <div className="md:col-span-2 overflow-hidden rounded-xl border border-border bg-card/80 shadow-sm">
+          <div className="border-b border-border/60 p-5">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+              <Trophy className="h-5 w-5 text-amber-500" />
+              Top Active Repositories
             </h2>
           </div>
-          
-          <div className="p-5 space-y-6">
+
+          <div className="space-y-3 p-4">
             {rankings.length === 0 ? (
-              <p className="text-sm text-muted-foreground font-semibold py-4">No repository data found. Try syncing GitHub data.</p>
+              <p className="p-4 text-sm font-medium text-muted-foreground">No repository ranking data found. Sync your GitHub data to populate this list.</p>
             ) : (
               rankings.map((repo, idx) => {
-                const rankColors = ["text-amber-500 bg-amber-500/10 border-amber-500/20", "text-slate-400 bg-slate-500/10 border-slate-500/20", "text-amber-700 bg-amber-700/10 border-amber-700/20"];
-                const badgeStyle = rankColors[idx] || "text-muted-foreground bg-secondary/80 border-border/20";
-                
+                const rankStyle = ["bg-amber-500/10 text-amber-600 border-amber-500/20", "bg-slate-500/10 text-slate-400 border-slate-500/20", "bg-amber-700/10 text-amber-700 border-amber-700/20"]; 
                 return (
-                  <div key={repo.id} className="flex items-start gap-4 p-4 border border-border/30 bg-card/30 rounded-xl hover:bg-card/75 hover:border-primary/20 hover:shadow-sm transition-all duration-200 group">
-                    <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold border ${badgeStyle} flex-shrink-0`}>
+                  <div key={repo.id} className="flex items-start gap-3 rounded-lg border border-border bg-secondary/20 p-3 transition-colors hover:bg-secondary/35">
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-sm font-bold ${rankStyle[idx % rankStyle.length]}`}>
                       #{idx + 1}
                     </span>
-                    
-                    <div className="flex-1 min-w-0 space-y-2.5">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <Link 
-                          href={`/repositories/${repo.id}`}
-                          className="font-bold text-foreground group-hover:text-primary transition-colors text-base flex items-center gap-1.5"
-                        >
-                          <span>{repo.name}</span>
-                          <ExternalLink className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </Link>
 
-                        <div className="flex items-center gap-3">
-                          <span className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground">
-                            <GitCommit className="w-3.5 h-3.5 text-violet-500" />
-                            <span>{repo._count.commits} commits</span>
-                          </span>
-                        </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Link href={`/repositories/${repo.id}`} className="flex items-center gap-1.5 text-base font-bold text-foreground hover:text-primary">
+                          <span>{repo.name}</span>
+                          <ExternalLink className="h-3.5 w-3.5 opacity-0 transition-opacity hover:opacity-100" />
+                        </Link>
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                          <GitCommit className="h-3.5 w-3.5 text-violet-500" />
+                          {repo._count.commits} commits
+                        </span>
                       </div>
 
-                      {/* Languages */}
                       {repo.languages && repo.languages.length > 0 && (
-                        <div className="flex gap-1.5 flex-wrap">
-                          {repo.languages.slice(0, 4).map(lang => (
-                            <span key={lang.id} className="px-2 py-0.5 rounded-md bg-secondary/80 text-[10px] font-semibold text-muted-foreground border border-border/20">
-                              {lang.name}
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {repo.languages.slice(0, 4).map((language) => (
+                            <span key={language.id} className="rounded-md border border-border bg-card px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                              {language.name}
                             </span>
                           ))}
                         </div>
@@ -395,123 +388,105 @@ export function AnalyticsClient({ user }: { user: User }) {
           </div>
         </div>
 
-        {/* Featured Repo Spotlight */}
-        <div className="bg-gradient-to-br from-indigo-500/5 to-violet-500/5 border border-indigo-500/10 rounded-2xl p-6 shadow-sm flex flex-col justify-between space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest flex items-center gap-1.5">
-              <Trophy className="w-4 h-4 text-indigo-500 animate-bounce" />
-              <span>Most Active Repository</span>
-            </h2>
-            
-            {topRepo ? (
-              <div className="space-y-3">
-                <h3 className="text-2xl font-extrabold text-foreground tracking-tight leading-tight">
-                  {topRepo.name}
-                </h3>
-                <p className="text-xs font-semibold text-muted-foreground leading-relaxed">
-                  This repository has accumulated the highest commit frequency in your workspace profile.
-                </p>
-                
-                <div className="grid grid-cols-3 gap-2 pt-4">
-                  <div className="bg-card/60 border border-border/30 rounded-xl p-2.5 text-center">
-                    <Star className="w-4 h-4 text-amber-500 mx-auto mb-1" />
-                    <span className="text-xs font-bold block text-foreground">{topRepo.stars}</span>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Stars</span>
-                  </div>
-                  <div className="bg-card/60 border border-border/30 rounded-xl p-2.5 text-center">
-                    <GitFork className="w-4 h-4 text-indigo-500 mx-auto mb-1" />
-                    <span className="text-xs font-bold block text-foreground">{topRepo.forks}</span>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Forks</span>
-                  </div>
-                  <div className="bg-card/60 border border-border/30 rounded-xl p-2.5 text-center">
-                    <GitCommit className="w-4 h-4 text-violet-500 mx-auto mb-1" />
-                    <span className="text-xs font-bold block text-foreground">{topRepo._count.commits}</span>
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Commits</span>
-                  </div>
-                </div>
+        <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+          <div className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-indigo-600 dark:text-indigo-400">
+            <Trophy className="h-4 w-4" />
+            Most Active Repository
+          </div>
 
-                <div className="pt-6">
-                  <Link
-                    href={`/repositories/${topRepo.id}`}
-                    className="w-full py-2.5 bg-primary text-primary-foreground font-semibold text-xs rounded-xl hover:shadow-lg hover:shadow-primary/10 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <span>Analyze Repository</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
+          {topRepo ? (
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-foreground">{topRepo.name}</h3>
+              <p className="text-sm text-muted-foreground">This repository has the strongest sync footprint in your current dataset.</p>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-md border border-border bg-secondary/35 p-2 text-center">
+                  <Star className="mx-auto mb-1 h-4 w-4 text-amber-500" />
+                  <p className="text-sm font-bold text-foreground">{topRepo.stars}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Stars</p>
+                </div>
+                <div className="rounded-md border border-border bg-secondary/35 p-2 text-center">
+                  <GitFork className="mx-auto mb-1 h-4 w-4 text-indigo-500" />
+                  <p className="text-sm font-bold text-foreground">{topRepo.forks}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Forks</p>
+                </div>
+                <div className="rounded-md border border-border bg-secondary/35 p-2 text-center">
+                  <GitCommit className="mx-auto mb-1 h-4 w-4 text-violet-500" />
+                  <p className="text-sm font-bold text-foreground">{topRepo._count.commits}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Commits</p>
                 </div>
               </div>
-            ) : (
-              <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
-                Connect and sync repositories in your Dashboard to highlight your active profiles here.
-              </p>
-            )}
-          </div>
-        </div>
 
+              <Link href={`/repositories/${topRepo.id}`} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-0.5">
+                Analyze Repository
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Connect and sync repositories in the Dashboard to surface the most active repository.</p>
+          )}
+        </div>
       </div>
 
-      {/* Distribution Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="border border-border/40 rounded-2xl bg-card/60 p-6 shadow-sm">
-          <h2 className="text-base font-bold text-foreground tracking-tight mb-5 flex items-center gap-2">
-            <Code2 className="w-5 h-5 text-pink-500" />
-            <span>Language Distribution</span>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+          <h2 className="mb-5 flex items-center gap-2 text-lg font-bold text-foreground">
+            <Code2 className="h-5 w-5 text-pink-500" />
+            Language Distribution
           </h2>
+
           {languageData && languageData.languages.length > 0 ? (
             <div className="space-y-4">
-              <div className="flex h-3 rounded-full overflow-hidden bg-secondary border border-border/30">
+              <div className="flex h-3 overflow-hidden rounded-full border border-border bg-secondary">
                 {languageData.languages.slice(0, 8).map((language, index) => {
                   const colors = ["bg-indigo-500", "bg-violet-500", "bg-amber-400", "bg-emerald-500", "bg-pink-500", "bg-sky-400", "bg-rose-500", "bg-lime-500"];
                   return (
-                    <div
-                      key={language.name}
-                      className={colors[index % colors.length]}
-                      style={{ width: `${language.percentage}%` }}
-                      title={`${language.name}: ${language.percentage}%`}
-                    />
+                    <div key={language.name} className={colors[index % colors.length]} style={{ width: `${language.percentage}%` }} title={`${language.name}: ${language.percentage}%`} />
                   );
                 })}
               </div>
+
               <div className="space-y-3">
                 {languageData.languages.slice(0, 8).map((language) => (
                   <div key={language.name} className="space-y-1.5">
-                    <div className="flex justify-between text-xs font-bold">
+                    <div className="flex items-center justify-between gap-3 text-xs font-bold">
                       <span className="text-foreground">{language.name}</span>
-                      <span className="text-muted-foreground">{language.percentage}% across {language.repositories} repos</span>
+                      <span className="text-muted-foreground">{language.percentage}% · {language.repositories} repos</span>
                     </div>
-                    <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                      <div className="h-full bg-pink-500" style={{ width: `${language.percentage}%` }} />
+                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                      <div className="h-full bg-indigo-500" style={{ width: `${language.percentage}%` }} />
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground font-semibold">No language data found. Sync repositories to populate language analytics.</p>
+            <p className="text-sm font-medium text-muted-foreground">No language data available yet. Sync repositories to populate the language breakdown.</p>
           )}
         </div>
 
-        <div className="border border-border/40 rounded-2xl bg-card/60 p-6 shadow-sm">
-          <h2 className="text-base font-bold text-foreground tracking-tight mb-5 flex items-center gap-2">
-            <GitCommit className="w-5 h-5 text-indigo-500" />
-            <span>Repository Commit Distribution</span>
+        <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+          <h2 className="mb-5 flex items-center gap-2 text-lg font-bold text-foreground">
+            <TrendingUp className="h-5 w-5 text-indigo-500" />
+            Repository Commit Distribution
           </h2>
+
           {repositoryDistribution.length > 0 ? (
             <div className="space-y-3">
               {repositoryDistribution.slice(0, 8).map((repository) => (
                 <div key={repository.id} className="space-y-1.5">
-                  <div className="flex justify-between gap-3 text-xs font-bold">
-                    <span className="text-foreground truncate">{repository.name}</span>
-                    <span className="text-muted-foreground whitespace-nowrap">{repository.commits} commits</span>
+                  <div className="flex items-center justify-between gap-3 text-xs font-bold">
+                    <span className="truncate text-foreground">{repository.name}</span>
+                    <span className="whitespace-nowrap text-muted-foreground">{repository.commits} commits</span>
                   </div>
-                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
-                    <div className="h-full bg-indigo-500" style={{ width: `${repository.percentage}%` }} />
+                  <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full bg-primary" style={{ width: `${repository.percentage}%` }} />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground font-semibold">No repository commit distribution found yet.</p>
+            <p className="text-sm font-medium text-muted-foreground">No repository distribution data found yet.</p>
           )}
         </div>
       </div>
