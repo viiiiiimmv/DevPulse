@@ -1,189 +1,152 @@
-# ⚡ DevPulse
+# DevPulse — GitHub Developer Analytics
 
-> **Your GitHub activity. Your development pulse.**
+> Turn your GitHub activity into meaningful insights. Understand how you build, what you build, and where your development effort goes.
 
-DevPulse is a developer intelligence platform that transforms your GitHub activity into meaningful insights about your coding patterns, repositories, contributions, and development habits.
+[![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square\&logo=nextdotjs\&logoColor=white)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square\&logo=typescript\&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-61DAFB?style=flat-square\&logo=react\&logoColor=black)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square\&logo=tailwindcss\&logoColor=white)](https://tailwindcss.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square\&logo=postgresql\&logoColor=white)](https://www.postgresql.org/)
+[![GitHub API](https://img.shields.io/badge/GitHub_API-181717?style=flat-square\&logo=github\&logoColor=white)](https://docs.github.com/en/rest)
 
-Instead of simply showing GitHub statistics, DevPulse helps you understand **how you build, where you contribute, and how your development activity evolves over time.**
-
-<p align="center">
-  <a href="https://devpulse-viiiiiimmv.vercel.app/">
-    <strong>🚀 View Live Demo</strong>
-  </a>
-</p>
-
----
-
-## ✨ What is DevPulse?
-
-Developers generate a huge amount of activity across GitHub — commits, repositories, programming languages, and contribution patterns.
-
-DevPulse brings that information together into a focused workspace where you can explore your GitHub presence and understand your development activity at a glance.
-
-### 🔄 Sync
-
-Connect your GitHub account and synchronize your profile, repositories, and contribution history.
-
-### 📊 Analyze
-
-Explore your development activity through meaningful metrics and visualizations, including repository activity, contribution patterns, and language distribution.
-
-### 💓 Pulse
-
-Understand your development rhythm and identify where your time and effort are concentrated.
+**Live Website →** [devpulse-viiiiiimmv.vercel.app](https://devpulse-viiiiiimmv.vercel.app)
 
 ---
 
-## 🚀 Key Features
+## About
 
-* 🔐 **GitHub Authentication**
+DevPulse is a developer analytics platform that transforms GitHub activity into a clear and interactive overview of your development journey.
 
-  * Securely connect your GitHub account.
-  * Access your development data through GitHub authentication.
+Instead of looking through raw repositories, commits, and contribution graphs, DevPulse brings your GitHub activity together into one focused analytics experience.
 
-* 📈 **GitHub Activity Analytics**
-
-  * Track commits and repository activity.
-  * Understand your overall contribution patterns.
-  * Monitor your development activity over time.
-
-* 📦 **Repository Intelligence**
-
-  * Explore your repositories in one centralized workspace.
-  * Identify repositories receiving the most activity.
-  * Understand where your development efforts are concentrated.
-
-* 💻 **Language Insights**
-
-  * Visualize the programming languages used across your GitHub activity.
-  * See the composition of your development stack.
-
-* 📊 **Developer Overview**
-
-  * Get a high-level snapshot of your GitHub presence.
-  * Quickly understand your activity, repositories, score, and top languages.
-
-* 📅 **Activity Trends**
-
-  * Analyze contribution patterns across different time periods.
-  * Identify changes in your development rhythm.
-
-* 🎯 **Developer Score**
-
-  * Get a simplified pulse of your current GitHub activity.
-  * Use activity signals to understand your overall development consistency.
+It helps developers understand their **coding patterns, repository activity, contribution trends, language distribution, and overall development pulse**.
 
 ---
 
-## 🧠 Why DevPulse?
+## Features
 
-GitHub provides an enormous amount of information, but raw activity doesn't always tell the complete story.
+### Developer Dashboard
 
-DevPulse focuses on turning that activity into **context**.
+* Get a centralized overview of your GitHub activity
+* Track key development metrics at a glance
+* View your overall developer pulse and activity
+* Monitor contribution and repository trends
 
-Instead of asking:
+### GitHub Analytics
 
-> *"How many commits did I make?"*
+* Analyze GitHub contribution activity
+* Explore commit patterns and development frequency
+* Identify changes in your activity over time
+* Understand your overall development consistency
 
-DevPulse helps answer:
+### Repository Insights
 
-> *"What does my development activity actually look like?"*
+* View and analyze your GitHub repositories
+* Identify your most active projects
+* Understand where your development effort is concentrated
+* Explore repository-level activity and statistics
 
-It gives developers a centralized view of their coding activity, repository focus, language usage, and contribution patterns.
+### Language Analytics
+
+* Visualize your programming language distribution
+* See which technologies dominate your development activity
+* Understand how your technical stack evolves through your GitHub work
+
+### Contribution Analysis
+
+* Explore contribution patterns across your GitHub history
+* Identify active periods and development trends
+* Turn GitHub contribution data into meaningful insights
+
+### Developer Pulse
+
+* Get a simplified view of your current development activity
+* Combine multiple activity signals into a single developer-focused overview
+* Quickly understand the state of your GitHub presence
 
 ---
 
-## 🛠️ Tech Stack
-
-| Technology               | Purpose                           |
-| ------------------------ | --------------------------------- |
-| **Next.js**              | Full-stack web application        |
-| **React**                | User interface                    |
-| **TypeScript**           | Type-safe application development |
-| **Tailwind CSS**         | Styling and responsive UI         |
-| **NextAuth.js**          | Authentication                    |
-| **GitHub API / Octokit** | GitHub data integration           |
-| **Prisma**               | Database ORM                      |
-| **PostgreSQL**           | Persistent data storage           |
-| **Redis / BullMQ**       | Background processing             |
-| **Zod**                  | Schema validation                 |
-| **Lucide React**         | Interface icons                   |
-
----
-
-## 🏗️ Core Architecture
+## How It Works
 
 ```text
-                    ┌─────────────────┐
-                    │     GitHub      │
-                    │      API       │
-                    └────────┬────────┘
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │    DevPulse     │
-                    │   Application   │
-                    └────────┬────────┘
-                             │
-              ┌──────────────┼──────────────┐
-              │              │              │
-              ▼              ▼              ▼
-        Authentication    Analytics     Background
-        & GitHub Sync     Engine         Processing
-              │              │              │
-              └──────────────┼──────────────┘
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │   PostgreSQL    │
-                    │    Database     │
-                    └─────────────────┘
+GitHub Activity
+      ↓
+Data Synchronization
+      ↓
+Data Processing & Analysis
+      ↓
+Developer Analytics
+      ↓
+Insights & Visualizations
 ```
 
----
-
-## 📊 What You Can Explore
-
-DevPulse provides a centralized view of:
-
-* GitHub commits
-* Repository activity
-* Contribution patterns
-* Programming language distribution
-* Most active repositories
-* Development trends
-* Overall developer activity
-* Repository-level insights
-
-The platform is designed to make these signals easier to understand through a dedicated analytics experience rather than raw GitHub data.
+DevPulse collects relevant GitHub activity, processes it into meaningful metrics, and presents the results through an interactive analytics interface.
 
 ---
 
-## 🎯 Project Goals
+## Tech Stack
 
-DevPulse was built around a few simple ideas:
-
-* Make GitHub activity easier to understand.
-* Turn raw developer data into useful insights.
-* Provide a focused developer analytics experience.
-* Help developers recognize their coding patterns.
-* Create a foundation for deeper developer intelligence and productivity analysis.
-
----
-
-## 🌐 Live Demo
-
-**Try DevPulse:**
-https://devpulse-viiiiiimmv.vercel.app/
-
----
-
-## 📌 Project Status
-
-DevPulse is an actively developed project with its analytics experience designed around GitHub activity, repository intelligence, and developer contribution patterns.
+| Layer              | Technology   |
+| ------------------ | ------------ |
+| Framework          | Next.js      |
+| Frontend           | React        |
+| Language           | TypeScript   |
+| Styling            | Tailwind CSS |
+| GitHub Integration | GitHub API   |
+| Database           | PostgreSQL   |
+| ORM                | Prisma       |
+| Authentication     | GitHub OAuth |
+| Validation         | Zod          |
+| Icons              | Lucide React |
+| Deployment         | Vercel       |
 
 ---
 
-<p align="center">
-  Built with ❤️ for developers who want to understand their code beyond the commit count.
-</p>
+## What DevPulse Helps You Understand
+
+| Area          | Insights                                    |
+| ------------- | ------------------------------------------- |
+| Contributions | Activity and contribution patterns          |
+| Repositories  | Project activity and development focus      |
+| Languages     | Programming language distribution           |
+| Trends        | Changes in development activity over time   |
+| Productivity  | Development consistency and overall pulse   |
+| Profile       | A consolidated view of your GitHub presence |
+
+---
+
+## Why DevPulse?
+
+GitHub gives developers the data.
+
+**DevPulse gives that data context.**
+
+Your GitHub profile contains years of development activity, but understanding that activity often requires jumping between repositories, contribution graphs, commit histories, and language statistics.
+
+DevPulse brings those signals together into a single experience designed specifically around **developer activity and self-analysis**.
+
+Whether you're tracking your own progress, understanding your development habits, or simply curious about what your GitHub activity says about you, DevPulse provides a clearer picture.
+
+---
+
+## Project Vision
+
+DevPulse is built around the idea that a developer's GitHub activity can reveal much more than a contribution graph.
+
+The goal is to evolve from simple GitHub statistics into a deeper **developer intelligence platform** — helping developers understand their habits, consistency, technical focus, and growth through the work they produce.
+
+---
+
+## Author
+
+**Shiv Chauhan**
+
+[![Portfolio](https://img.shields.io/badge/Portfolio-000000?style=flat-square\&logo=vercel\&logoColor=white)](https://shivchauhan835.netlify.app)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square\&logo=linkedin\&logoColor=white)](https://linkedin.com/in/shivchauhan)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat-square\&logo=github\&logoColor=white)](https://github.com/viiiiiimmv)
+
+---
+
+## License
+
+This project is private and proprietary. All rights reserved © 2026.
