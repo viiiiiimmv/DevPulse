@@ -4,7 +4,9 @@ import NextAuth, {
   type NextAuthOptions,
   type Session,
 } from "next-auth";
+import { getToken } from "next-auth/jwt";
 import Github, { type GithubProfile } from "next-auth/providers/github";
+import type { NextRequest } from "next/server";
 
 import { prisma } from "@/src/server/prisma/client";
 import { logActivity } from "@/src/services/activity.service";
@@ -44,6 +46,13 @@ export const authOptions: NextAuthOptions = {
       clientId: githubClientId!,
       clientSecret: githubClientSecret!,
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          // `repo` is GitHub OAuth's least-privileged classic scope that
+          // permits reading private repositories the user can access.
+          scope: "read:user user:email repo",
+        },
+      },
     }),
   ],
 
@@ -142,7 +151,6 @@ export const authOptions: NextAuthOptions = {
         session.user.avatarUrl =
           token.avatarUrl ?? session.user.image ?? null;
         session.user.id = token.sub ?? null;
-        session.accessToken = token.accessToken ?? undefined;
       }
 
       return session;
@@ -159,6 +167,12 @@ export const handlers = {
 
 export function auth(): Promise<Session | null> {
   return getServerSession(authOptions);
+}
+
+export async function getGitHubAccessToken(request: NextRequest) {
+  const token = await getToken({ req: request });
+
+  return typeof token?.accessToken === "string" ? token.accessToken : null;
 }
 
 export async function signIn(

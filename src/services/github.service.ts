@@ -67,15 +67,14 @@ export async function getRepositories(token : string){
   return cached(`github:repos:${tokenCacheKey(token)}`, 5 * 60 * 1000, async () => {
     const octokit = getGitHubClient(token);
 
-    const {data} =
-    await withGitHubErrors("fetching repositories", () =>
-      octokit.rest.repos.listForAuthenticatedUser({
-        sort : "updated",
-        per_page : 100
+    return withGitHubErrors("fetching repositories", () =>
+      octokit.paginate(octokit.rest.repos.listForAuthenticatedUser, {
+        affiliation: "owner,collaborator,organization_member",
+        direction: "desc",
+        sort: "updated",
+        per_page: 100,
       }),
     );
-
-    return data;
   });
 }
 

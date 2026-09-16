@@ -1,13 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import { auth } from "@/src/auth";
+import { getGitHubAccessToken } from "@/src/auth";
 import { scheduleGitHubSyncJob } from "@/src/services/sync-queue.service";
 import { requireCurrentUser, UnauthorizedError } from "@/src/services/session.service";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const [session, user] = await Promise.all([auth(), requireCurrentUser()]);
-    const accessToken = session?.accessToken;
+    const [accessToken, user] = await Promise.all([
+      getGitHubAccessToken(request),
+      requireCurrentUser(),
+    ]);
 
     if (!accessToken) {
       return NextResponse.json(

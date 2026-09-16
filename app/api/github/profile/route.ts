@@ -1,13 +1,16 @@
 // app/api/github/profile/route.ts
 
-import { auth } from "@/src/auth";
+import { auth, getGitHubAccessToken } from "@/src/auth";
 import { prisma } from "@/src/server/prisma/client";
 import { getUserProfile } from "@/src/services/github.service";
 import { logActivity } from "@/src/services/activity.service";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST() {
-  const session = await auth();
+export async function POST(request: NextRequest) {
+  const [session, accessToken] = await Promise.all([
+    auth(),
+    getGitHubAccessToken(request),
+  ]);
 
   if (!session?.user?.githubId) {
     return NextResponse.json(
@@ -16,7 +19,7 @@ export async function POST() {
     );
   }
 
-  if (!session.accessToken) {
+  if (!accessToken) {
     return NextResponse.json(
       { error: "No GitHub access token available" },
       { status: 401 }
@@ -24,7 +27,7 @@ export async function POST() {
   }
 
   try {
-    const profile = await getUserProfile(session.accessToken);
+    const profile = await getUserProfile(accessToken);
 
     // Get the user from database to have their ID
     const user = await prisma.user.findUnique({
