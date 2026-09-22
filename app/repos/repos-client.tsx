@@ -11,6 +11,7 @@ import {
   ExternalLink,
   Calendar,
   Lock,
+  Globe2,
   AlertCircle,
 } from "lucide-react";
 
@@ -175,12 +176,10 @@ export function ReposClient({ user }: { user: User }) {
                     <ExternalLink className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
                   </h3>
 
-                  {repo.isPrivate && (
-                    <span className="inline-flex items-center gap-1 rounded-md border border-red-500/20 bg-red-500/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-red-600 dark:text-red-400">
-                      <Lock className="h-3 w-3" />
-                      Private
-                    </span>
-                  )}
+                  <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] ${repo.isPrivate ? "border-red-500/20 bg-red-500/10 text-red-600 dark:text-red-400" : "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"}`}>
+                    {repo.isPrivate ? <Lock className="h-3 w-3" /> : <Globe2 className="h-3 w-3" />}
+                    {repo.isPrivate ? "Private" : "Public"}
+                  </span>
                 </div>
 
                 {repo.description && (

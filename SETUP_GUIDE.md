@@ -92,6 +92,26 @@ The application will be available at: http://localhost:3000
 ✓ Redis/BullMQ background repository sync
 ✓ Daily, weekly, monthly, repository, and language analytics APIs
 ✓ Live dashboard sync completion events
+✓ Public and private repositories owned by the authenticated GitHub user
+
+### GitHub repository permissions
+
+DevPulse requests the GitHub OAuth scopes `read:user user:email repo`. The
+classic `repo` scope is required to read private repository metadata, commits,
+and language statistics. Repository synchronization uses GitHub's authenticated
+user endpoint with all visibility types and owner affiliation, then verifies the
+GitHub owner ID before associating repositories with a DevPulse account. Shared
+repositories and organization-owned repositories are not imported as personal
+repositories. Pagination is handled by Octokit.
+
+Repository data and analytics are served only to the signed-in DevPulse user.
+The access token stays server-side.
+
+If a GitHub authorization was created without the `repo` scope, changing the
+configuration cannot add permission to its already-issued token. Sign out,
+revoke DevPulse under GitHub **Settings → Applications → Authorized OAuth Apps**,
+then sign in again and approve the requested access. Normal existing DevPulse
+authorizations already granted `repo` do not need to be renewed.
 
 ## Available Routes
 

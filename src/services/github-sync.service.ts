@@ -28,22 +28,34 @@ export async function syncGitHubRepositories({
   accessToken,
 }: SyncOptions): Promise<GitHubSyncResult> {
   const repos = await getRepositories(accessToken);
+  const githubUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { githubId: true },
+  });
+  if (!githubUser) {
+    throw new Error("Authenticated DevPulse user was not found.");
+  }
+  // Defense in depth: only track repositories owned by this GitHub identity.
+  // The API query is owner-only, but never associate shared/org repos as personal.
+  const ownedRepos = repos.filter(
+    (repo) => repo.owner?.id != null && String(repo.owner.id) === githubUser.githubId,
+  );
   let fetchedCommits = 0;
   let syncedLanguages = 0;
   let skippedRepositories = 0;
 
   await logActivity(userId, "GITHUB_REPOSITORY_SYNC_STARTED", {
-    repositoryCount: repos.length,
+    repositoryCount: ownedRepos.length,
   });
 
   emitUserEvent(userId, {
     type: "GITHUB_REPOSITORY_SYNC_STARTED",
     payload: {
-      repositoryCount: repos.length,
+      repositoryCount: ownedRepos.length,
     },
   });
 
-  for (const repo of repos) {
+  for (const repo of ownedRepos) {
     const existingRepo = await prisma.repository.findFirst({
       where: {
         githubRepoId: repo.id.toString(),
@@ -97,9 +109,9 @@ export async function syncGitHubRepositories({
     });
 
     if (shouldFetchCommits) {
-      try {
-        const owner = repo.owner?.login || username;
-        if (owner) {
+      const owner = repo.owner?.login || username;
+      if (owner) {
+        try {
           const commits = await getRecentCommits(accessToken, owner, repo.name, 100);
           fetchedCommits += commits.length;
 
@@ -132,19 +144,22 @@ export async function syncGitHubRepositories({
             });
           }
 
+        } catch (error) {
+          console.error(`Failed to fetch commits for repository ${repo.name}:`, error);
+        }
+
+        try {
           const languages = await getRepositoryLanguages(accessToken, owner, repo.name);
           const languageNames = Object.keys(languages);
 
-          if (languageNames.length > 0) {
-            await prisma.repositoryLanguage.deleteMany({
-              where: {
-                repositoryId: dbRepo.id,
-                name: {
-                  notIn: languageNames,
-                },
-              },
-            });
-          }
+          await prisma.repositoryLanguage.deleteMany({
+            where: {
+              repositoryId: dbRepo.id,
+              ...(languageNames.length > 0
+                ? { name: { notIn: languageNames } }
+                : {}),
+            },
+          });
 
           for (const [languageName, bytes] of Object.entries(languages)) {
             syncedLanguages += 1;
@@ -165,9 +180,9 @@ export async function syncGitHubRepositories({
               },
             });
           }
+        } catch (error) {
+          console.error(`Failed to fetch languages for repository ${repo.name}:`, error);
         }
-      } catch (error) {
-        console.error(`Failed to fetch repository details for ${repo.name}:`, error);
       }
     } else {
       skippedRepositories += 1;
@@ -194,7 +209,7 @@ export async function syncGitHubRepositories({
   }
 
   const result = {
-    syncedRepositories: repos.length,
+    syncedRepositories: ownedRepos.length,
     fetchedCommits,
     syncedLanguages,
     skippedRepositories,

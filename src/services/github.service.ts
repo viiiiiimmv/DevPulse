@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Octokit } from "octokit";
 import { cached } from "@/src/services/cache.service";
 
@@ -8,7 +9,7 @@ export function getGitHubClient(accessToken: string) {
 }
 
 function tokenCacheKey(token: string) {
-  return token.slice(-12);
+  return createHash("sha256").update(token).digest("hex");
 }
 
 function getGitHubErrorMessage(error: unknown, context: string) {
@@ -69,7 +70,10 @@ export async function getRepositories(token : string){
 
     return withGitHubErrors("fetching repositories", () =>
       octokit.paginate(octokit.rest.repos.listForAuthenticatedUser, {
-        affiliation: "owner,collaborator,organization_member",
+        // Keep the personal analytics scope: don't import repositories merely
+        // shared with the authenticated user or owned by an organization.
+        affiliation: "owner",
+        visibility: "all",
         direction: "desc",
         sort: "updated",
         per_page: 100,
