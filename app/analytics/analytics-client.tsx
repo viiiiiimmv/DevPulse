@@ -125,12 +125,21 @@ function BarSeries({
         <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Avg {data.average}</span>
       </div>
 
-      <div className="flex h-44 items-end gap-1.5">
+      <div
+        className="relative flex h-44 items-end gap-1.5"
+        role="img"
+        aria-label={`${title}: ${data.total} commits across ${glyphs.length} periods`}
+      >
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex flex-col justify-between">
+          {[0, 1, 2, 3].map((line) => (
+            <div key={line} className="border-t border-border/50" />
+          ))}
+        </div>
         {glyphs.map((point) => (
-          <div key={point.date} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+          <div key={point.date} className="relative z-10 flex h-full min-w-0 flex-1 flex-col justify-end">
             <div
-              className="w-full max-w-5 rounded-t-md bg-gradient-to-t from-primary/80 to-violet-400 transition-colors hover:from-primary"
-              style={{ height: `${Math.max((point.commits / max) * 100, point.commits > 0 ? 10 : 2)}%` }}
+              className="mx-auto w-full max-w-5 rounded-t-md bg-gradient-to-t from-primary/80 to-violet-400 transition-colors hover:from-primary"
+              style={{ height: point.commits > 0 ? `${Math.max((point.commits / max) * 100, 4)}%` : "2px" }}
               title={`${point.label}: ${point.commits} commits`}
             />
           </div>
