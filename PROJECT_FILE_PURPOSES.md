@@ -28,6 +28,9 @@ This document explains the main purpose served by the key files in this project 
 - `app/analytics/analytics-client.tsx` — Client-side analytics dashboard that fetches and renders charts and summary data.
 - `app/repositories/[repositoryId]/page.tsx` — Individual repository detail page entry.
 - `app/repositories/[repositoryId]/commits-list.tsx` — Client component that lists commits for one repository.
+- `app/privacy/page.tsx` — Privacy Policy page compliant with the Digital Personal Data Protection Act, 2023 (DPDP Act) and the Information Technology Act, 2000 of India.
+- `app/terms/page.tsx` — Terms of Service page governing access, GitHub OAuth integration, and acceptable use.
+- `app/data-minimisation/page.tsx` — Data Minimisation Charter detailing zero-trust architecture, ephemeral processing, and data classification.
 
 ## 4. API routes for GitHub and data access
 
@@ -93,10 +96,12 @@ This document explains the main purpose served by the key files in this project 
 ## 7. UI components and reusable building blocks
 
 - `components/navigation.tsx` — Top navigation and app-level navigation controls.
+- `components/logout-dialog.tsx` — Reusable confirmation dialog for signing out with seamless design language.
 - `components/ui/button.tsx` — Reusable button component styled for the project.
 - `components/ui/card.tsx` — Reusable card UI for content panels and dashboard blocks.
 - `components/ui/dialog.tsx` — Reusable modal/dialog component.
 - `components/ui/input.tsx` — Shared input field component.
+- `components/platform-preview.tsx` — Interactive architecture and engineering telemetry showcase for the welcome page.
 
 ## 8. Project configuration and tooling
 

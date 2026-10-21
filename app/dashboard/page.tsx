@@ -1,5 +1,10 @@
 import { auth, signOut } from "@/src/auth";
-import { getDashboardStats, getRecentActivity, getDashboardCommits } from "@/src/services/dashboard.service";
+import {
+  getDashboardStats,
+  getRecentActivity,
+  getDashboardCommits,
+  getDashboardCommitActivity,
+} from "@/src/services/dashboard.service";
 import { redirect } from "next/navigation";
 import { DashboardContent } from "./dashboard-content";
 import { getCurrentUser } from "@/src/services/session.service";
@@ -25,10 +30,11 @@ export default async function DashboardPage() {
   }
 
   // Fetch dashboard data on the server
-  const [stats, activities, commits] = await Promise.all([
+  const [stats, activities, commits, commitActivity] = await Promise.all([
     getDashboardStats(user.id),
     getRecentActivity(user.id),
-    getDashboardCommits(user.id, 100)
+    getDashboardCommits(user.id, 100),
+    getDashboardCommitActivity(user.id),
   ]);
 
   return (
@@ -37,6 +43,7 @@ export default async function DashboardPage() {
       stats={stats}
       activities={activities}
       commits={commits}
+      commitActivity={commitActivity}
       onLogout={handleLogout} 
     />
   );

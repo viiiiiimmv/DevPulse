@@ -2,19 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { signOut } from "next-auth/react";
+import { useState } from "react";
 import { 
   LayoutDashboard, 
   User, 
-  Sun, 
-  Moon, 
   LogOut, 
   Activity,
   BarChart3,
   FolderGit
 } from "lucide-react";
 import { FaGithub } from "react-icons/fa6";
+import { LogoutDialog } from "@/components/logout-dialog";
 
 interface NavigationProps {
   isAuthenticated?: boolean;
@@ -22,37 +20,7 @@ interface NavigationProps {
 
 export function Navigation({ isAuthenticated = false }: NavigationProps) {
   const pathname = usePathname();
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-
-  // Initialize theme from document class
-  useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    const timer = setTimeout(() => {
-      setTheme(isDark ? "dark" : "light");
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const toggleTheme = () => {
-    if (theme === "light") {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setTheme("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setTheme("light");
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-    } catch (error) {
-      console.error("Failed to log out activity", error);
-    }
-    await signOut({ callbackUrl: "/" });
-  };
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const isActive = (path: string) => pathname === path;
 
@@ -77,22 +45,32 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
             </span>
           </Link>
 
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleTheme}
-              className="p-2.5 rounded-md border border-border bg-card/80 text-muted-foreground hover:text-foreground hover:bg-secondary/80 transition-all hover:-translate-y-0.5"
-              aria-label="Toggle theme"
-              title="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground shadow-sm shadow-primary/10 transition-transform hover:-translate-y-0.5 hover:bg-primary/90"
-            >
-              <FaGithub className="w-4 h-4" />
-              Sign In
-            </Link>
+          <div className="flex items-center gap-4">
+            <nav className="hidden sm:flex items-center gap-4 text-xs font-mono">
+              <Link href="/#capabilities" className="text-muted-foreground hover:text-foreground transition-colors">
+                Capabilities
+              </Link>
+              <Link href="/#architecture" className="text-muted-foreground hover:text-foreground transition-colors">
+                Architecture
+              </Link>
+              <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
+                <span className="hidden md:inline">Terms of Service</span>
+                <span className="md:hidden">Terms</span>
+              </Link>
+              <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                Privacy
+              </Link>
+            </nav>
+
+            <div className="flex items-center gap-2.5">
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 rounded-md border border-primary/30 bg-primary px-3.5 py-1.5 text-xs font-mono font-bold uppercase tracking-wider text-primary-foreground shadow-sm shadow-primary/10 transition-transform hover:-translate-y-0.5 hover:bg-primary/90"
+              >
+                <FaGithub className="w-3.5 h-3.5" />
+                Sign In
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -139,21 +117,10 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
         <div className="p-3 border-t border-border/50 space-y-3 flex flex-col items-center">
           <div className="relative flex justify-start pl-3 w-full">
             <button
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              className="flex h-11 w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-muted-foreground transition-all duration-200 hover:border-border/50 hover:bg-secondary/70 hover:text-foreground"
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-indigo-500" />}
-            </button>
-          </div>
-
-          <div className="relative flex justify-start pl-3 w-full">
-            <button
-              onClick={handleLogout}
+              onClick={() => setShowLogoutDialog(true)}
               aria-label="Logout"
               title="Logout"
-              className="flex h-11 w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-red-600 transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/5 dark:text-red-400"
+              className="flex h-11 w-11 items-center justify-center rounded-md border border-transparent bg-transparent text-red-400 transition-all duration-200 hover:border-red-500/25 hover:bg-red-500/5 cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -181,23 +148,20 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
         })}
 
         <button
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="flex flex-col items-center gap-1 p-2 text-muted-foreground hover:text-foreground"
-        >
-          {theme === "dark" ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-indigo-500" />}
-          <span className="text-[10px] font-medium">Theme</span>
-        </button>
-
-        <button
-          onClick={handleLogout}
+          onClick={() => setShowLogoutDialog(true)}
           aria-label="Logout"
-          className="flex flex-col items-center gap-1 p-2 text-red-600 dark:text-red-400"
+          className="flex flex-col items-center gap-1 p-2 text-red-400 cursor-pointer"
         >
           <LogOut className="w-5 h-5" />
           <span className="text-[10px] font-medium">Logout</span>
         </button>
       </div>
+
+      <LogoutDialog
+        open={showLogoutDialog}
+        onOpenChange={setShowLogoutDialog}
+        callbackUrl="/login"
+      />
     </>
   );
 }

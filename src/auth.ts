@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import NextAuth, {
   getServerSession,
   type NextAuthOptions,
@@ -217,9 +218,21 @@ export async function signOut(
     }
   }
 
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete("next-auth.session-token");
+    cookieStore.delete("__Secure-next-auth.session-token");
+    cookieStore.delete("next-auth.csrf-token");
+    cookieStore.delete("__Host-next-auth.csrf-token");
+    cookieStore.delete("next-auth.callback-url");
+    cookieStore.delete("__Secure-next-auth.callback-url");
+  } catch (err) {
+    console.error("Failed to delete cookies in signOut", err);
+  }
+
   const redirectTo = options?.redirectTo ?? "/login";
 
   redirect(
-    `/api/auth/signout?redirectTo=${encodeURIComponent(redirectTo)}`,
+    redirectTo,
   );
 }

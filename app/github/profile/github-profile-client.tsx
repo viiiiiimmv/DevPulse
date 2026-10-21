@@ -143,7 +143,7 @@ export function GitHubProfileClient({ user }: { user: User }) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-[1700px] space-y-6 px-3 sm:px-5 lg:px-6 py-5">
       <header className="border-b border-border/60 pb-6">
         <p className="dp-label mb-2">Account connection</p>
         <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
@@ -159,8 +159,8 @@ export function GitHubProfileClient({ user }: { user: User }) {
         </div>
       )}
 
-      <div className="grid items-start gap-8 lg:grid-cols-[1.5fr_0.75fr]">
-        <div className="space-y-8">
+      <div className="grid items-start gap-6 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-8">
           <section className="rounded-xl border border-border bg-card/80 p-6 shadow-sm">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
               <img src={displayData.avatarUrl || "https://via.placeholder.com/120"} alt={displayData.username} className="h-24 w-24 rounded-full border border-border object-cover shadow-sm" />
@@ -226,7 +226,7 @@ export function GitHubProfileClient({ user }: { user: User }) {
           </section>
         </div>
 
-        <aside className="space-y-6">
+        <aside className="space-y-6 lg:col-span-4">
           <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
             <button
               onClick={handleSync}

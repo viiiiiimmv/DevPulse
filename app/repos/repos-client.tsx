@@ -87,7 +87,7 @@ export function ReposClient({ user }: { user: User }) {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl animate-pulse space-y-8 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto w-full max-w-[1700px] animate-pulse space-y-6 px-3 sm:px-5 lg:px-6 py-5">
         <div className="h-24 rounded-xl border border-border/40 bg-card/40" />
         <div className="h-12 max-w-md rounded-xl border border-border/40 bg-card/40" />
         <div className="grid gap-6 md:grid-cols-2">
@@ -101,7 +101,7 @@ export function ReposClient({ user }: { user: User }) {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto w-full max-w-[1700px] px-3 sm:px-5 lg:px-6 py-5">
         <div className="space-y-4 rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
           <h2 className="text-lg font-bold text-foreground">Repositories Unavailable</h2>
@@ -118,7 +118,7 @@ export function ReposClient({ user }: { user: User }) {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-[1700px] space-y-6 px-3 sm:px-5 lg:px-6 py-5">
       <header className="flex flex-col gap-4 border-b border-border/60 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="dp-label mb-2">Repository inventory</p>
@@ -161,7 +161,7 @@ export function ReposClient({ user }: { user: User }) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredRepos.map((repo) => (
             <button
               key={repo.id}

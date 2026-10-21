@@ -52,7 +52,7 @@ export default async function RepositoryDetailsPage(
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 transition-colors duration-300">
+    <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-5 lg:px-6 py-5 space-y-6 transition-colors duration-300">
         
         {/* Back Link & Header */}
         <div className="space-y-4">
@@ -101,10 +101,10 @@ export default async function RepositoryDetailsPage(
         </div>
 
         {/* Grid Stats and Languages */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           
           {/* Stats Card */}
-          <div className="bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-4 bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
             <h2 className="text-sm font-bold text-foreground tracking-tight mb-4 flex items-center gap-1.5">
               <Info className="w-4 h-4 text-indigo-500" />
               <span>Repository Statistics</span>
@@ -132,7 +132,7 @@ export default async function RepositoryDetailsPage(
           </div>
 
           {/* Languages Card */}
-          <div className="md:col-span-2 bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-8 bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
             <h2 className="text-sm font-bold text-foreground tracking-tight mb-4 flex items-center gap-1.5">
               <Code className="w-4 h-4 text-violet-500" />
               <span>Language Distribution</span>

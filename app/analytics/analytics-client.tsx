@@ -216,7 +216,7 @@ export function AnalyticsClient({ user }: { user: User }) {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl animate-pulse space-y-8 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto w-full max-w-[1700px] animate-pulse space-y-6 px-3 sm:px-5 lg:px-6 py-5">
         <div className="h-24 rounded-xl border border-border/40 bg-card/40" />
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((n) => (
@@ -230,7 +230,7 @@ export function AnalyticsClient({ user }: { user: User }) {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto w-full max-w-[1700px] px-3 sm:px-5 lg:px-6 py-5">
         <div className="space-y-4 rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center">
           <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
           <h2 className="text-lg font-bold text-foreground">Analytics Unreachable</h2>
@@ -258,7 +258,7 @@ export function AnalyticsClient({ user }: { user: User }) {
     : [];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-[1700px] space-y-6 px-3 sm:px-5 lg:px-6 py-5">
       <header className="flex items-center justify-between gap-4 border-b border-border/60 pb-6">
         <div>
           <p className="dp-label mb-2">Developer insights</p>
@@ -347,8 +347,8 @@ export function AnalyticsClient({ user }: { user: User }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:items-start">
-        <div className="md:col-span-2 overflow-hidden rounded-xl border border-border bg-card/80 shadow-sm">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:items-start">
+        <div className="lg:col-span-8 overflow-hidden rounded-xl border border-border bg-card/80 shadow-sm">
           <div className="border-b border-border/60 p-5">
             <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
               <Trophy className="h-5 w-5 text-amber-500" />
@@ -361,7 +361,7 @@ export function AnalyticsClient({ user }: { user: User }) {
               <p className="p-4 text-sm font-medium text-muted-foreground">No repository ranking data found. Sync your GitHub data to populate this list.</p>
             ) : (
               rankings.map((repo, idx) => {
-                const rankStyle = ["bg-amber-500/10 text-amber-600 border-amber-500/20", "bg-slate-500/10 text-slate-400 border-slate-500/20", "bg-amber-700/10 text-amber-700 border-amber-700/20"]; 
+                const rankStyle = ["bg-amber-500/10 text-amber-700 dark:text-amber-500 border-amber-500/20", "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20", "bg-amber-700/10 text-amber-800 dark:text-amber-400 border-amber-700/20"]; 
                 return (
                   <div key={repo.id} className="flex items-start gap-3 rounded-lg border border-border bg-secondary/20 p-3 transition-colors hover:bg-secondary/35">
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border text-sm font-bold ${rankStyle[idx % rankStyle.length]}`}>
@@ -397,7 +397,7 @@ export function AnalyticsClient({ user }: { user: User }) {
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
+        <div className="lg:col-span-4 rounded-xl border border-border bg-card/80 p-5 shadow-sm">
           <div className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-indigo-600 dark:text-indigo-400">
             <Trophy className="h-4 w-4" />
             Most Active Repository
@@ -437,7 +437,7 @@ export function AnalyticsClient({ user }: { user: User }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <div className="rounded-xl border border-border bg-card/80 p-5 shadow-sm">
           <h2 className="mb-5 flex items-center gap-2 text-lg font-bold text-foreground">
             <Code2 className="h-5 w-5 text-pink-500" />
