@@ -93,6 +93,7 @@ interface RepositoryDistribution {
 
 interface DeveloperSummary {
   productivityScore: number;
+  cadenceIndex?: number;
   currentStreak: number;
   activeDays: number;
   topLanguage: LanguageAnalytics["languages"][number] | null;

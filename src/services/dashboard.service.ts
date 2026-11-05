@@ -107,7 +107,7 @@ export async function getDashboardLanguages(userId: string): Promise<DashboardLa
     totalBytes += item.bytes;
   }
 
-  let languages = Object.entries(totals)
+  const languages = Object.entries(totals)
     .map(([name, data]) => ({
       name,
       bytes: data.bytes,
@@ -116,17 +116,7 @@ export async function getDashboardLanguages(userId: string): Promise<DashboardLa
     }))
     .sort((a, b) => b.bytes - a.bytes);
 
-  // If no languages are synced yet in database, provide realistic initial breakdown
-  if (languages.length === 0) {
-    languages = [
-      { name: "TypeScript", bytes: 485200, repoCount: 4, percentage: 42.6 },
-      { name: "Java", bytes: 312800, repoCount: 2, percentage: 27.5 },
-      { name: "Spring Boot", bytes: 182400, repoCount: 2, percentage: 16.0 },
-      { name: "JavaScript", bytes: 98100, repoCount: 3, percentage: 8.6 },
-      { name: "Python", bytes: 59800, repoCount: 1, percentage: 5.3 },
-    ];
-    totalBytes = 1138300;
-  }
+  
 
   return {
     totalBytes,

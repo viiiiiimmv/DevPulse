@@ -11,10 +11,7 @@ import {
   Database,
   Cpu,
   Trash2,
-  Layers,
-  Sparkles,
 } from "lucide-react";
-import { FaGithub } from "react-icons/fa6";
 
 export const metadata = {
   title: "Data Minimisation Charter | DevPulse",

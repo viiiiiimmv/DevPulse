@@ -47,11 +47,14 @@ export function Navigation({ isAuthenticated = false }: NavigationProps) {
 
           <div className="flex items-center gap-4">
             <nav className="hidden sm:flex items-center gap-4 text-xs font-mono">
-              <Link href="/#capabilities" className="text-muted-foreground hover:text-foreground transition-colors">
-                Capabilities
+              <Link href="/#telemetry" className="text-muted-foreground hover:text-foreground transition-colors">
+                Telemetry
               </Link>
-              <Link href="/#architecture" className="text-muted-foreground hover:text-foreground transition-colors">
-                Architecture
+              <Link href="/#specs" className="text-muted-foreground hover:text-foreground transition-colors">
+                Specifications
+              </Link>
+              <Link href="/#security" className="text-muted-foreground hover:text-foreground transition-colors">
+                Data Minimization
               </Link>
               <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap">
                 <span className="hidden md:inline">Terms of Service</span>

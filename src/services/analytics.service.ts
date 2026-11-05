@@ -1,4 +1,11 @@
 import { prisma } from "@/src/server/prisma/client";
+import {
+  calculateActiveDays,
+  calculateCurrentStreak,
+  calculateProductivityScore,
+  calculateCadenceIndex,
+  calculateVelocityTrend,
+} from "@/src/lib/metrics";
 
 type Interval = "daily" | "weekly" | "monthly";
 
@@ -189,7 +196,6 @@ export async function getCommitTimeline(
   const series = Array.from(counts.values());
   const total = series.reduce((sum, item) => sum + item.commits, 0);
   const average = series.length === 0 ? 0 : Number((total / series.length).toFixed(2));
-  const previous = series.at(-2)?.commits ?? 0;
   const latest = series.at(-1)?.commits ?? 0;
 
   return {
@@ -197,12 +203,7 @@ export async function getCommitTimeline(
     total,
     average,
     latest,
-    trend:
-      latest > previous
-        ? "up"
-        : latest < previous
-          ? "down"
-          : "flat",
+    trend: calculateVelocityTrend(series),
     series,
   };
 }
@@ -378,28 +379,20 @@ export async function getDeveloperSummary(userId: string) {
       getCommitTimeline(userId, "daily", 30),
     ]);
 
-  const activeDays = dailyTimeline.series.filter((day) => day.commits > 0).length;
-  let currentStreak = 0;
+  const activeDays = calculateActiveDays(dailyTimeline.series);
+  const currentStreak = calculateCurrentStreak(dailyTimeline.series);
+  const cadenceIndex = calculateCadenceIndex(activeDays, 30);
 
-  for (const day of [...dailyTimeline.series].reverse()) {
-    if (day.commits === 0) {
-      break;
-    }
-    currentStreak += 1;
-  }
-
-  const productivityScore = Math.min(
-    100,
-    Math.round(
-      commitStats.weeklyCommits * 6 +
-        activeDays * 2 +
-        topRepositories.length * 4 +
-        Math.min(languageStats.languages.length, 10) * 2,
-    ),
-  );
+  const productivityScore = calculateProductivityScore({
+    weeklyCommits: commitStats.weeklyCommits,
+    activeDays,
+    repoCount: topRepositories.length,
+    languageCount: languageStats.languages.length,
+  });
 
   return {
     productivityScore,
+    cadenceIndex,
     currentStreak,
     activeDays,
     topRepository: topRepositories[0] ?? null,

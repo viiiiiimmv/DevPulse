@@ -26,6 +26,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-cadence-0: var(--cadence-0);
+  --color-cadence-1: var(--cadence-1);
+  --color-cadence-2: var(--cadence-2);
+  --color-cadence-3: var(--cadence-3);
+  --color-cadence-4: var(--cadence-4);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -47,13 +52,14 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.75);
+  --radius-xs: 0.125rem;
+  --radius-sm: calc(var(--radius) * 0.667);
   --radius-md: var(--radius);
-  --radius-lg: var(--radius);
-  --radius-xl: var(--radius);
-  --radius-2xl: var(--radius);
-  --radius-3xl: var(--radius);
-  --radius-4xl: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.333);
+  --radius-xl: calc(var(--radius) * 2);
+  --radius-2xl: calc(var(--radius) * 2.667);
+  --radius-3xl: calc(var(--radius) * 3.333);
+  --radius-4xl: calc(var(--radius) * 4);
 }
 
 :root,
@@ -92,6 +98,11 @@
   --chart-3: #10b981;
   --chart-4: #f59e0b;
   --chart-5: #ef4444;
+  --cadence-0: rgba(255, 255, 255, 0.04);
+  --cadence-1: #1e1b4b;
+  --cadence-2: #3730a3;
+  --cadence-3: #6366f1;
+  --cadence-4: #818cf8;
   --radius: 0.375rem;
   --sidebar: #101319;
   --sidebar-foreground: #f1f5f9;

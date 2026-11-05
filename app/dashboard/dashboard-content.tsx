@@ -67,7 +67,6 @@ export function DashboardContent({
   activities,
   commits,
   commitActivity,
-  onLogout,
 }: {
   user: DashboardUser;
   stats: DashboardStats;
@@ -307,9 +306,7 @@ export function DashboardContent({
       });
     }
 
-    const hasRealCommits = Object.keys(commitCounts).length > 0;
-
-    // Align end date to Saturday of current week
+        // Align end date to Saturday of current week
     const currentDayOfWeek = today.getDay();
     const daysUntilSaturday = (6 - currentDayOfWeek + 7) % 7;
     const endDate = new Date(today);
@@ -342,17 +339,6 @@ export function DashboardContent({
       const isFuture = d.getTime() > today.getTime();
 
       let count = commitCounts[dateStr] || 0;
-
-      // Realistic cadence fallback if user has no commits synced yet
-      if (!hasRealCommits && !isFuture) {
-        const seed = (d.getFullYear() * 1000 + (d.getMonth() + 1) * 31 + d.getDate()) % 19;
-        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-        if (isWeekend) {
-          count = seed > 15 ? 2 : 0;
-        } else {
-          count = seed === 0 ? 0 : seed % 7;
-        }
-      }
 
       if (isFuture) count = 0;
 

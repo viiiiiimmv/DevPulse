@@ -42,6 +42,7 @@ function isGitHubProfile(profile: unknown): profile is GithubProfile {
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     Github({
       clientId: githubClientId!,
@@ -59,6 +60,13 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: "jwt",
+  },
+
+  logger: {
+    error(code, metadata) {
+      if (code === "JWT_SESSION_ERROR") return;
+      console.error(`[next-auth][error][${code}]`, metadata);
+    },
   },
 
   callbacks: {
@@ -166,12 +174,16 @@ export const handlers = {
   POST: handler,
 };
 
-export function auth(): Promise<Session | null> {
-  return getServerSession(authOptions);
+export async function auth(): Promise<Session | null> {
+  try {
+    return await getServerSession(authOptions);
+  } catch {
+    return null;
+  }
 }
 
 export async function getGitHubAccessToken(request: NextRequest) {
-  const token = await getToken({ req: request });
+  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
   return typeof token?.accessToken === "string" ? token.accessToken : null;
 }
