@@ -38,12 +38,6 @@ export default async function Home() {
           <div className="grid gap-10 lg:grid-cols-12 lg:items-start">
             {/* Left Column: Telemetry Thesis & Actions (5 cols) */}
             <div className="space-y-6 lg:col-span-5 lg:pt-2">
-              {/* Telemetry Status Pill */}
-              <div className="inline-flex items-center gap-2 rounded-sm border border-border bg-surface-raised px-2.5 py-1 text-xs font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                <span>DevPulse // Telemetry Console v2.4</span>
-              </div>
-
               {/* Main Headline */}
               <h1 className="font-mono text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl leading-[1.15]">
                 Git telemetry and cadence engine for developers.
@@ -484,10 +478,7 @@ export default async function Home() {
           </div>
 
           <div className="pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
-            <p>&copy; {new Date().getFullYear()} DevPulse Technologies. All rights reserved.</p>
-            <p className="text-muted-foreground">
-              DPDP Act 2023 Compliant Developer Telemetry
-            </p>
+            <p>&copy; {new Date().getFullYear()} VIII.III.MMV LABS. All rights reserved.</p>
           </div>
         </div>
       </footer>
